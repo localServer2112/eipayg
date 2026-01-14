@@ -1,10 +1,10 @@
 // Placeholder for the user image. Replace with the actual image import or URL.
-import userImg from "../../img/UserImg.svg";
+import userImg from "../../assets/img/UserImg.svg";
 
 const UserProfileCard: React.FC = () => {
   const userDetails = {
     name: "Adewale Ciroma Chukwuka",
-    cardId: "4982020932",
+    cardId: "WER-ER-ER-ER",
     location: "Ibadan",
     phoneNumber: "08071798413",
   };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PlusIcon } from 'lucide-react';
-import Pencil from "../../img/Pencil.svg";
+import Pencil from "../../assets/img/Pencil.svg";
 import AddUnitModal from './AddUnitModal';
 
 const BalanceCard = () => {
