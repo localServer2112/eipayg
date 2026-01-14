@@ -20,9 +20,9 @@ const BalanceCard = () => {
             <img src={Pencil} alt="Pencil" width="12" height="12" />
             Edit Details
           </button>
-          
+
           {/* Updated Button: Now triggers the modal opening */}
-          <button 
+          <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center px-4 py-2.5 bg-gray-900 text-white rounded-full font-medium text-xs hover:bg-gray-800 transition-colors gap-2"
           >

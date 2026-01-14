@@ -1,13 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/layout/MainLayout";
-import ArrowLeft from "../Img/Vector.svg";
 import UserProfileCard from "./ViewComp/UserProfileCard";
 import BalanceCard from "./ViewComp/BalanceCard";
 import DepositsCard from "./ViewComp/DepositsCard";
 import SpendingsCard from "./ViewComp/SpendingsCard";
+import ArrowLeft from "../img/Vector.svg";
 
 function App() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   return (
     <>
       <MainLayout showNavLinks={false}>

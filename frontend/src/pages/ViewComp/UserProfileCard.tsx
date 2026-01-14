@@ -2,12 +2,12 @@
 import userImg from "../../img/UserImg.svg";
 
 const UserProfileCard: React.FC = () => {
-    const userDetails = {
-        name: "Adewale Ciroma Chukwuka",
-        cardId: "4982020932",
-        location: "Ibadan",
-        phoneNumber: "08071798413",
-    };
+  const userDetails = {
+    name: "Adewale Ciroma Chukwuka",
+    cardId: "4982020932",
+    location: "Ibadan",
+    phoneNumber: "08071798413",
+  };
   return (
     <div className="bg-white rounded-2xl p-6 mb-6 flex items-center shadow-sm">
       <img

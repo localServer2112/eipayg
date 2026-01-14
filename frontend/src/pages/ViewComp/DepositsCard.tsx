@@ -1,5 +1,5 @@
 import { Search as MagnifyingGlassIcon } from "lucide-react";
-import Arrowtop from "../../img/Arrowtop.svg";
+import Arrowtop from "../../img/ArrowTop.svg";
 
 // Mock Data for Deposits
 const depositsData = Array(5).fill({
