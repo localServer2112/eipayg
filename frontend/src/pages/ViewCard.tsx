@@ -4,7 +4,7 @@ import UserProfileCard from "./ViewComp/UserProfileCard";
 import BalanceCard from "./ViewComp/BalanceCard";
 import DepositsCard from "./ViewComp/DepositsCard";
 import SpendingsCard from "./ViewComp/SpendingsCard";
-import ArrowLeft from "../img/Vector.svg";
+import arrowLeft from "../img/vector.svg";
 
 function App() {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ function App() {
         <div className="min-h-screen p-6 sm:p-8 lg:p-2 max-w-7xl mx-auto">
           <div>
             <button onClick={() => navigate('/cards')} className="top">
-              <img src={ArrowLeft} alt="" width="18.67" height="18.67" />
+              <img src={arrowLeft} alt="" width="18.67" height="18.67" />
               <p>Back</p>
             </button>
             <UserProfileCard />
