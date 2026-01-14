@@ -1,5 +1,5 @@
 // Placeholder for the user image. Replace with the actual image import or URL.
-import userImg from "../../Img/UserImg.svg";
+import userImg from "../../img/UserImg.svg";
 
 const UserProfileCard: React.FC = () => {
     const userDetails = {
