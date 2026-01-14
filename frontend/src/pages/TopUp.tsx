@@ -4,4 +4,4 @@ const TopUp = () => {
   )
 }
 
-export default TopUp
+export default TopUp;
