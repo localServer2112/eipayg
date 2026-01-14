@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url("https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,100..900;1,100..900&display=swap");
+
 @layer base {
   :root {
     /* Background: Light Gray #F3F4F6 / #F9FAFB mix */
@@ -84,4 +86,19 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+body {
+  font-family: "Inter Tight", sans-serif;
+}
+.horizontal {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  place-content: center;
+  gap: 10px;
+}
+.top {
+  display: flex;
+  gap: 0.7rem;
+  padding-bottom: 1rem;
 }

@@ -15,8 +15,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 import Dashboard from './pages/Dashboard';
 import Cards from './pages/Cards';
 import CardDetails from './pages/CardDetails';
+import ViewCard from './pages/ViewCard';
 
 import Storage from './pages/Storage';
+import TopUp from './pages/TopUp';
 
 const NotFound = () => <div className="h-screen flex items-center justify-center">404 - Not Found</div>;
 
@@ -40,6 +42,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <Cards />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/viewcard"
+            element={
+              <ProtectedRoute>
+                <ViewCard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/topup"
+            element={
+              <ProtectedRoute>
+                <TopUp />
               </ProtectedRoute>
             }
           />

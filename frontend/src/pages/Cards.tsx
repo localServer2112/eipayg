@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { MainLayout } from '../layout/MainLayout';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -99,8 +100,9 @@ const Cards: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="py-3 px-4 flex gap-2">
-                                            <Button size="sm" variant="secondary">View</Button>
-                                            <Button size="sm" variant="secondary">Top-up</Button>
+                                            
+                                            <Button size="sm" variant="secondary"><Link to="/viewcard">View</Link></Button>
+                                            <Button size="sm" variant="secondary"><Link to="/topup">Top-up</Link></Button>
                                         </td>
                                     </tr>
                                 ))}
