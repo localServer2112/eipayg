@@ -2,11 +2,13 @@
 
 export interface Transaction {
     uuid: string;
-    type: 'credit' | 'debit';
+    account: string;
+    transaction_type: 'credit' | 'debit' | 'C' | 'D';
+    transaction_type_display?: string;
     amount: string;
     description: string;
-    balance_after: string;
-    created_at: string;
+    balance_after?: string; // Kept as optional, might be enriched by frontend or separate endpoint
+    created: string; // Swagger uses 'created'
 }
 
 export interface UserInfo {
@@ -25,15 +27,19 @@ export interface CardInfo {
 
 export interface StorageEntry {
     uuid: string;
+    account: string;
+    account_uuid: string;
+    account_balance?: string;
     commodity: string;
     weight: string;
     check_in: string;
     check_out: string | null;
-    estimated_check_out?: string;
+    estimated_check_out: string;
     hourly_rate: string;
     is_active: boolean;
-    created_at?: string;
-    updated_at?: string;
+    duration_hours?: number;
+    created: string;
+    updated: string;
 }
 
 export interface AccountDetails {

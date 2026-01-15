@@ -41,8 +41,8 @@ export interface UserProfile {
     phone: string;
     address: string;
     user_type: 'ADMIN' | 'USER';
-    created_at?: string;
-    updated_at?: string;
+    created?: string;
+    updated?: string;
 }
 
 // Auth API functions

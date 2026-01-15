@@ -9,8 +9,11 @@ export interface Card {
     is_blocked: boolean;
     user_info?: UserInfo;
     account_details?: AccountDetails;
-    created_at?: string;
-    updated_at?: string;
+    user_phone?: string;
+    user_name?: string;
+    balance?: string; // Optional, might not be returned in list
+    created?: string;
+    updated?: string;
 }
 
 export interface CreateAndAssignCardPayload {

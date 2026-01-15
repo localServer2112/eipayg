@@ -8,7 +8,7 @@ export interface CreateStoragePayload {
     commodity: string;
     weight: string;
     check_in: string;
-    estimated_check_out?: string;
+    estimated_check_out: string;
     hourly_rate: string;
 }
 

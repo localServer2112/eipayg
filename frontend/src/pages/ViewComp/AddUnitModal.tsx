@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
+import { cardsApi } from '../../api/cards';
 
 interface AddUnitModalProps {
   onClose: () => void;
+  cardUuid: string;
+  onSuccess: () => void;
 }
 
-const AddUnitModal: React.FC<AddUnitModalProps> = ({ onClose }) => {
-  const [passcode, setPasscode] = useState(['', '', '', '']);
+const AddUnitModal: React.FC<AddUnitModalProps> = ({ onClose, cardUuid, onSuccess }) => {
+  const [amount, setAmount] = useState('');
+  const [passcode, setPasscode] = useState(['', '', '', '']); // Visual only currently
+  const [isLoading, setIsLoading] = useState(false);
 
   const handlePasscodeChange = (index: number, value: string) => {
     if (value.length > 1) return;
@@ -13,21 +19,46 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ onClose }) => {
     newPasscode[index] = value;
     setPasscode(newPasscode);
 
-    // Auto-focus next input
     if (value && index < 3) {
       const nextInput = document.getElementById(`passcode-${index + 1}`);
       nextInput?.focus();
     }
   };
 
+  const handleAddUnit = async () => {
+    if (!amount) {
+      toast.error('Please enter an amount');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      // Strip currency symbol if present
+      const cleanAmount = amount.replace(/[^0-9.]/g, '');
+
+      await cardsApi.topUp({
+        card_uuid: cardUuid,
+        amount: cleanAmount,
+        description: 'Web Top-up'
+      });
+
+      toast.success('Units added successfully');
+      onSuccess();
+      onClose();
+    } catch (error) {
+      console.error('Top up failed:', error);
+      toast.error('Failed to add units');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    // Overlay Container: Fixed over the whole screen with a blur
-    <div 
+    <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
-      {/* Modal Content: The white card */}
-      <div 
+      <div
         className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl relative mx-4"
         onClick={(e) => e.stopPropagation()}
       >
@@ -36,25 +67,24 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ onClose }) => {
           Credit this user by entering the amount sent and your password
         </p>
 
-        <form className="space-y-6">
-          {/* Amount Input */}
+        <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleAddUnit(); }}>
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-2">
               Amount sent
             </label>
             <input
               type="text"
-              placeholder="N0.00"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
             />
           </div>
 
-          {/* Read-only 'You get' box */}
           <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-900">
-            You get: <span className="font-semibold">50 units</span>
+            To be credited: <span className="font-semibold">{amount || '0'}</span>
           </div>
 
-          {/* Passcode Section */}
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-3">
               Enter transaction passcode
@@ -64,7 +94,7 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ onClose }) => {
                 <input
                   key={index}
                   id={`passcode-${index}`}
-                  type="text"
+                  type="password"
                   maxLength={1}
                   value={digit}
                   onChange={(e) => handlePasscodeChange(index, e.target.value)}
@@ -74,12 +104,12 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ onClose }) => {
             </div>
           </div>
 
-          {/* Action Button */}
           <button
-            type="button"
-            className="w-full bg-[#1A1C1E] text-white font-medium py-3.5 rounded-xl hover:bg-gray-800 transition-colors"
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-[#1A1C1E] text-white font-medium py-3.5 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50"
           >
-            Add Unit
+            {isLoading ? 'Processing...' : 'Add Unit'}
           </button>
         </form>
       </div>

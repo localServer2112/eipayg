@@ -2,7 +2,7 @@ import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosE
 
 // Create axios instance with default config
 const api: AxiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+    baseURL: import.meta.env.VITE_API_BASE_URL,
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
@@ -12,7 +12,7 @@ const api: AxiosInstance = axios.create({
 // Request interceptor - attach auth token
 api.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('token');
         if (token && config.headers) {
             config.headers.Authorization = `Token ${token}`;
         }
@@ -29,7 +29,7 @@ api.interceptors.response.use(
     (error: AxiosError) => {
         if (error.response?.status === 401) {
             // Unauthorized - clear token and redirect to login
-            localStorage.removeItem('authToken');
+            localStorage.removeItem('token');
             window.location.href = '/login';
         }
         return Promise.reject(error);

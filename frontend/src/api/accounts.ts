@@ -9,8 +9,8 @@ export interface Account {
     card_info?: CardInfo;
     transactions?: Transaction[];
     storage_activities?: StorageEntry[];
-    created_at?: string;
-    updated_at?: string;
+    created?: string;
+    updated?: string;
 }
 
 export interface AccountDetailsPayload {
