@@ -10,20 +10,7 @@ interface AddUnitModalProps {
 
 const AddUnitModal: React.FC<AddUnitModalProps> = ({ onClose, cardUuid, onSuccess }) => {
   const [amount, setAmount] = useState('');
-  const [passcode, setPasscode] = useState(['', '', '', '']); // Visual only currently
   const [isLoading, setIsLoading] = useState(false);
-
-  const handlePasscodeChange = (index: number, value: string) => {
-    if (value.length > 1) return;
-    const newPasscode = [...passcode];
-    newPasscode[index] = value;
-    setPasscode(newPasscode);
-
-    if (value && index < 3) {
-      const nextInput = document.getElementById(`passcode-${index + 1}`);
-      nextInput?.focus();
-    }
-  };
 
   const handleAddUnit = async () => {
     if (!amount) {
@@ -45,9 +32,16 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ onClose, cardUuid, onSucces
       toast.success('Units added successfully');
       onSuccess();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Top up failed:', error);
-      toast.error('Failed to add units');
+      const errorData = error.response?.data;
+      let errorMessage = 'Failed to add units';
+      if (errorData?.error) {
+        errorMessage = errorData.error;
+      } else if (errorData?.detail) {
+        errorMessage = errorData.detail;
+      }
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -64,13 +58,13 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ onClose, cardUuid, onSucces
       >
         <h2 className="text-2xl font-bold text-gray-900 mb-1">Add units</h2>
         <p className="text-gray-500 text-sm mb-6">
-          Credit this user by entering the amount sent and your password
+          Credit this user by entering the amount to add
         </p>
 
         <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleAddUnit(); }}>
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-2">
-              Amount sent
+              Amount
             </label>
             <input
               type="text"
@@ -82,26 +76,7 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ onClose, cardUuid, onSucces
           </div>
 
           <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-900">
-            To be credited: <span className="font-semibold">{amount || '0'}</span>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-3">
-              Enter transaction passcode
-            </label>
-            <div className="flex gap-4 justify-between">
-              {passcode.map((digit, index) => (
-                <input
-                  key={index}
-                  id={`passcode-${index}`}
-                  type="password"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handlePasscodeChange(index, e.target.value)}
-                  className="w-full h-14 border border-gray-200 rounded-xl text-center text-xl font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                />
-              ))}
-            </div>
+            To be credited: <span className="font-semibold">₦{amount || '0'}</span>
           </div>
 
           <button
