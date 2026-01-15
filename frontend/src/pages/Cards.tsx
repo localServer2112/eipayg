@@ -100,8 +100,8 @@ const Cards: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="py-3 px-4 flex gap-2">
-                                            
-                                            <Button size="sm" variant="secondary"><Link to="/viewcard">View</Link></Button>
+
+                                            <Button size="sm" variant="secondary"><Link to={`/viewcard/${card.uuid}`}>View</Link></Button>
                                             <Button size="sm" variant="secondary"><Link to="/topup">Top-up</Link></Button>
                                         </td>
                                     </tr>

@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { MainLayout } from "@/layout/MainLayout";
 import UserProfileCard from "./ViewComp/UserProfileCard";
 import BalanceCard from "./ViewComp/BalanceCard";
@@ -8,6 +8,8 @@ import arrowLeft from "../assets/img/vector.svg";
 
 function ViewCard() {
   const navigate = useNavigate();
+  const { cardUuid } = useParams<{ cardUuid: string }>();
+
   return (
     <>
       <MainLayout showNavLinks={false}>
@@ -17,7 +19,7 @@ function ViewCard() {
               <img src={arrowLeft} alt="" width="18.67" height="18.67" />
               <p>Back</p>
             </button>
-            <UserProfileCard />
+            <UserProfileCard cardUuid={cardUuid} />
             <BalanceCard />
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

@@ -46,7 +46,7 @@ function App() {
             }
           />
           <Route
-            path="/viewcard"
+            path="/viewcard/:cardUuid"
             element={
               <ProtectedRoute>
                 <ViewCard />
