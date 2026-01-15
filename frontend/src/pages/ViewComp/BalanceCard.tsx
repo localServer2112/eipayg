@@ -4,9 +4,6 @@ import AddUnitModal from './AddUnitModal';
 import { storagesApi } from '../../api/storages';
 import { cardsApi } from '../../api/cards';
 import { toast } from 'sonner';
-import { Modal } from '@/components/ui/modal';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 interface BalanceCardProps {
   balance: string;
@@ -118,11 +115,10 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ balance, cardUuid, accountUui
           {/* Suspend/Unblock Card Button */}
           <button
             onClick={() => setIsSuspendModalOpen(true)}
-            className={`flex items-center px-4 py-2.5 rounded-full font-medium text-xs transition-colors gap-2 ${
-              isBlocked
+            className={`flex items-center px-4 py-2.5 rounded-full font-medium text-xs transition-colors gap-2 ${isBlocked
                 ? 'bg-green-600 text-white hover:bg-green-700'
                 : 'bg-red-600 text-white hover:bg-red-700'
-            }`}
+              }`}
           >
             {isBlocked ? (
               <>
@@ -287,11 +283,10 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ balance, cardUuid, accountUui
               <button
                 onClick={handleSuspendToggle}
                 disabled={isSubmitting}
-                className={`px-6 py-2.5 rounded-xl font-medium text-white transition-colors disabled:opacity-50 ${
-                  isBlocked
+                className={`px-6 py-2.5 rounded-xl font-medium text-white transition-colors disabled:opacity-50 ${isBlocked
                     ? 'bg-green-600 hover:bg-green-700'
                     : 'bg-red-600 hover:bg-red-700'
-                }`}
+                  }`}
               >
                 {isSubmitting ? 'Processing...' : (isBlocked ? 'Unblock' : 'Suspend')}
               </button>
