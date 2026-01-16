@@ -8,6 +8,23 @@ import { storagesApi } from '../api/storages';
 import { Transaction } from '../api/types';
 import api from '../api/index';
 
+// Web Serial API type declarations
+interface SerialPort {
+    open(options: { baudRate: number }): Promise<void>;
+    close(): Promise<void>;
+    readable: ReadableStream<Uint8Array> | null;
+}
+
+interface Serial {
+    requestPort(): Promise<SerialPort>;
+}
+
+declare global {
+    interface Navigator {
+        serial?: Serial;
+    }
+}
+
 interface Stats {
     totalCards: number;
     activeCards: number;
@@ -99,7 +116,7 @@ const Dashboard = () => {
             console.log('Requesting serial port...');
             setScanStatus('Waiting for USB device selection...');
 
-            const port = await navigator.serial.requestPort();
+            const port = await navigator.serial!.requestPort();
             portRef.current = port;
 
             console.log('Serial port selected, opening connection...');
