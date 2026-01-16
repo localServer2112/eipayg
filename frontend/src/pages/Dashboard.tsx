@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../layout/MainLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -84,6 +85,7 @@ const formatCurrency = (amount: string | number) => {
 };
 
 const Dashboard = () => {
+    const navigate = useNavigate();
     const [stats, setStats] = useState<Stats>({
         totalCards: 0,
         activeCards: 0,
@@ -116,9 +118,10 @@ const Dashboard = () => {
             const existingCard = cards.find(card => card.uuid === cardUuid);
 
             if (existingCard && existingCard.user_phone) {
-                // Card is already assigned
-                setScanStatus(`Card already assigned to ${existingCard.user_phone}`);
-                toast.info(`Card is already assigned to ${existingCard.user_phone}`);
+                // Card is already assigned - navigate to view card page
+                setScanStatus(`Card assigned. Redirecting to card details...`);
+                toast.info(`Card found! Viewing details...`);
+                navigate(`/viewcard/${existingCard.uuid}`);
             } else {
                 // Card not assigned - open modal with pre-filled UUID
                 setAssignCardUuid(cardUuid);
