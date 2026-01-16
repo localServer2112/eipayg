@@ -2,11 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { MainLayout } from '../layout/MainLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { cardsApi } from '../api/cards';
+import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
+import { cardsApi, Card as CardType } from '../api/cards';
 import { accountsApi } from '../api/accounts';
 import { storagesApi } from '../api/storages';
 import { Transaction } from '../api/types';
 import api from '../api/index';
+import { toast } from 'sonner';
 
 // Web Serial API type declarations
 interface SerialPort {
@@ -94,6 +97,85 @@ const Dashboard = () => {
     const portRef = useRef<SerialPort | null>(null);
     const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 
+    // Assign Card Modal State
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [assignCardUuid, setAssignCardUuid] = useState('');
+    const [assignUserPhone, setAssignUserPhone] = useState('');
+    const [assignInitialBalance, setAssignInitialBalance] = useState('');
+    const [isAssigning, setIsAssigning] = useState(false);
+
+    // Handle scanned card data - check if assigned, if not open modal
+    const handleScannedCard = async (cardUuid: string) => {
+        setScanStatus(`Checking card ${cardUuid}...`);
+        try {
+            // Fetch all cards and check if this UUID exists and is assigned
+            const response = await cardsApi.list();
+            // @ts-ignore
+            const cards: CardType[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
+
+            const existingCard = cards.find(card => card.uuid === cardUuid);
+
+            if (existingCard && existingCard.user_phone) {
+                // Card is already assigned
+                setScanStatus(`Card already assigned to ${existingCard.user_phone}`);
+                toast.info(`Card is already assigned to ${existingCard.user_phone}`);
+            } else {
+                // Card not assigned - open modal with pre-filled UUID
+                setAssignCardUuid(cardUuid);
+                setAssignUserPhone('');
+                setAssignInitialBalance('');
+                setIsAssignModalOpen(true);
+                setScanStatus('Card not assigned. Please fill in the details.');
+            }
+        } catch (error) {
+            console.error('Error checking card:', error);
+            // If card doesn't exist in system, open modal to assign it
+            setAssignCardUuid(cardUuid);
+            setAssignUserPhone('');
+            setAssignInitialBalance('');
+            setIsAssignModalOpen(true);
+            setScanStatus('New card detected. Please fill in the details.');
+        }
+    };
+
+    // Handle assign card form submission
+    const handleAssignCard = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsAssigning(true);
+        try {
+            await cardsApi.assign({
+                card_uuid: assignCardUuid,
+                user_phone: assignUserPhone,
+                initial_balance: assignInitialBalance || '0'
+            });
+            toast.success('Card assigned successfully');
+            setIsAssignModalOpen(false);
+            setAssignCardUuid('');
+            setAssignUserPhone('');
+            setAssignInitialBalance('');
+            setScanStatus('Card assigned successfully!');
+            fetchDashboardData(); // Refresh dashboard data
+        } catch (error: any) {
+            console.error('Failed to assign card:', error);
+            const errorData = error.response?.data;
+            let errorMessage = 'Failed to assign card';
+            if (errorData) {
+                if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                } else if (errorData.error) {
+                    errorMessage = errorData.error;
+                } else if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                } else {
+                    errorMessage = JSON.stringify(errorData);
+                }
+            }
+            toast.error(errorMessage);
+        } finally {
+            setIsAssigning(false);
+        }
+    };
+
     const handleBeginScan = async () => {
         setIsScanning(true);
         setScanStatus('Initializing scan...');
@@ -106,8 +188,8 @@ const Dashboard = () => {
             // Use test JSON data
             const testData = { card_uuid: "test-2c963f66afa6" };
             console.log('Using test JSON data:', testData);
-            setScanStatus(`Test data received: ${JSON.stringify(testData)}`);
             setIsScanning(false);
+            await handleScannedCard(testData.card_uuid);
             return;
         }
 
@@ -154,10 +236,14 @@ const Dashboard = () => {
                             try {
                                 const jsonData = JSON.parse(jsonMatch[0]);
                                 console.log('Parsed JSON data from ESP32:', jsonData);
-                                setScanStatus(`Data received: ${JSON.stringify(jsonData)}`);
 
                                 // Clear the matched part from buffer
                                 buffer = buffer.substring(buffer.indexOf(jsonMatch[0]) + jsonMatch[0].length);
+
+                                // Handle the scanned card
+                                if (jsonData.card_uuid) {
+                                    await handleScannedCard(jsonData.card_uuid);
+                                }
                             } catch (parseError) {
                                 console.log('JSON parse error, waiting for more data...');
                             }
@@ -182,7 +268,7 @@ const Dashboard = () => {
             // Fallback to test JSON data
             const testData = { card_uuid: "test-2c963f66afa6" };
             console.log('Using test JSON data:', testData);
-            setScanStatus(`Test data received: ${JSON.stringify(testData)}`);
+            await handleScannedCard(testData.card_uuid);
         } finally {
             setIsScanning(false);
         }
@@ -371,6 +457,58 @@ const Dashboard = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Assign Card Modal */}
+            {isAssignModalOpen && (
+                <Modal
+                    isOpen={isAssignModalOpen}
+                    onClose={() => setIsAssignModalOpen(false)}
+                    title="Assign Card"
+                >
+                    <form onSubmit={handleAssignCard} className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium" htmlFor="cardUuid">Card UUID</label>
+                            <Input
+                                id="cardUuid"
+                                value={assignCardUuid}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAssignCardUuid(e.target.value)}
+                                placeholder="e.g. 4819e245-ebd8-406f-b09d-8078ea72e3a8"
+                                required
+                                readOnly
+                                className="bg-gray-100"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium" htmlFor="userPhone">User Phone</label>
+                            <Input
+                                id="userPhone"
+                                value={assignUserPhone}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAssignUserPhone(e.target.value)}
+                                placeholder="e.g. 0504567891"
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium" htmlFor="initialBalance">Initial Balance</label>
+                            <Input
+                                id="initialBalance"
+                                type="number"
+                                value={assignInitialBalance}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAssignInitialBalance(e.target.value)}
+                                placeholder="0.00"
+                            />
+                        </div>
+                        <div className="flex justify-end gap-2 mt-6">
+                            <Button type="button" variant="ghost" onClick={() => setIsAssignModalOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isAssigning}>
+                                {isAssigning ? 'Assigning...' : 'Assign Card'}
+                            </Button>
+                        </div>
+                    </form>
+                </Modal>
+            )}
         </MainLayout>
     );
 };
