@@ -18,7 +18,7 @@ const Cards: React.FC = () => {
     const [topupCardUuid, setTopupCardUuid] = useState<string | null>(null);
 
     // New Card Form State - Simplified for now
-    const [newCardName, setNewCardName] = useState('');
+    const [newCardUuid, setNewCardUuid] = useState('');
     const [newCardPhone, setNewCardPhone] = useState('');
     const [newCardBalance, setNewCardBalance] = useState('');
 
@@ -33,22 +33,7 @@ const Cards: React.FC = () => {
             // Handle if response is array or paginated object
             // @ts-ignore
             const results: Card[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
-
-            // Fetch balance for each card
-            const cardsWithBalance = await Promise.all(
-                results.map(async (card) => {
-                    try {
-                        const infoResponse = await cardsApi.getInfo({ card_uuid: card.uuid });
-                        return {
-                            ...card,
-                            balance: infoResponse.data.account_details?.balance
-                        };
-                    } catch {
-                        return card;
-                    }
-                })
-            );
-            setCards(cardsWithBalance);
+            setCards(results);
         } catch (error) {
             console.error('Failed to fetch cards:', error);
             toast.error('Failed to load cards');
@@ -60,34 +45,39 @@ const Cards: React.FC = () => {
     const handleCreateCard = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await cardsApi.createAndAssign({
-                name_on_card: newCardName,
+            await cardsApi.assign({
+                card_uuid: newCardUuid,
                 user_phone: newCardPhone,
                 initial_balance: newCardBalance || '0'
             });
-            toast.success('Card created successfully');
+            toast.success('Card assigned successfully');
             setIsCreateModalOpen(false);
-            setNewCardName('');
+            setNewCardUuid('');
             setNewCardPhone('');
             setNewCardBalance('');
             fetchCards(); // Refresh list
         } catch (error: any) {
-            console.error('Failed to create card:', error);
+            console.error('Failed to assign card:', error);
+            console.error('Error response data:', error.response?.data);
             const errorData = error.response?.data;
-            let errorMessage = 'Failed to create card';
+            let errorMessage = 'Failed to assign card';
             if (errorData) {
                 if (typeof errorData === 'string') {
                     errorMessage = errorData;
                 } else if (errorData.error) {
                     errorMessage = errorData.error;
                 } else if (errorData.user_phone) {
-                    errorMessage = errorData.user_phone[0];
-                } else if (errorData.name_on_card) {
-                    errorMessage = errorData.name_on_card[0];
+                    errorMessage = Array.isArray(errorData.user_phone) ? errorData.user_phone[0] : errorData.user_phone;
+                } else if (errorData.card_uuid) {
+                    errorMessage = Array.isArray(errorData.card_uuid) ? errorData.card_uuid[0] : errorData.card_uuid;
                 } else if (errorData.initial_balance) {
-                    errorMessage = errorData.initial_balance[0];
+                    errorMessage = Array.isArray(errorData.initial_balance) ? errorData.initial_balance[0] : errorData.initial_balance;
                 } else if (errorData.detail) {
                     errorMessage = errorData.detail;
+                } else if (errorData.non_field_errors) {
+                    errorMessage = Array.isArray(errorData.non_field_errors) ? errorData.non_field_errors[0] : errorData.non_field_errors;
+                } else {
+                    errorMessage = JSON.stringify(errorData);
                 }
             }
             toast.error(errorMessage);
@@ -181,15 +171,16 @@ const Cards: React.FC = () => {
                 <Modal
                     isOpen={isCreateModalOpen}
                     onClose={() => setIsCreateModalOpen(false)}
-                    title="Create & Assign New Card"
+                    title="Assign Card"
                 >
                     <form onSubmit={handleCreateCard} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium" htmlFor="name">Name on Card</label>
+                            <label className="text-sm font-medium" htmlFor="uuid">Card UUID</label>
                             <Input
-                                id="name"
-                                value={newCardName}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCardName(e.target.value)}
+                                id="uuid"
+                                value={newCardUuid}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCardUuid(e.target.value)}
+                                placeholder="e.g. 4819e245-ebd8-406f-b09d-8078ea72e3a8"
                                 required
                             />
                         </div>
@@ -214,7 +205,7 @@ const Cards: React.FC = () => {
                         </div>
                         <div className="flex justify-end gap-2 mt-6">
                             <Button type="button" variant="ghost" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
-                            <Button type="submit">Create Card</Button>
+                            <Button type="submit">Assign Card</Button>
                         </div>
                     </form>
                 </Modal>

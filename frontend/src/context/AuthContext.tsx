@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authService, type User } from '../services/auth';
+import { authApi, type UserProfile } from '../api/auth';
 
 interface AuthContextType {
-    user: User | null;
+    user: UserProfile | null;
     token: string | null;
-    login: (username: string, password: string) => Promise<void>;
+    login: (phone: string, password: string) => Promise<void>;
     logout: () => void;
     isAuthenticated: boolean;
     isLoading: boolean;
@@ -14,7 +14,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<UserProfile | null>(null);
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -28,18 +28,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(false);
     }, []); // Run once on mount
 
-    const login = async (username: string, password: string) => {
+    const login = async (phone: string, password: string) => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await authService.login(username, password);
-            setToken(response.token);
-            setUser(response.user);
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
+            const response = await authApi.login({ phone, password });
+            setToken(response.data.token);
+            setUser(response.data.user);
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
         } catch (err: any) {
-            setError(err.message || 'Login failed');
-            throw err;
+            const errorMessage = err.response?.data?.error || err.response?.data?.detail || err.message || 'Login failed';
+            setError(errorMessage);
+            throw new Error(errorMessage);
         } finally {
             setIsLoading(false);
         }

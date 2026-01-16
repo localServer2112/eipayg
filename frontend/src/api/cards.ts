@@ -30,6 +30,7 @@ export interface CreateAndAssignCardResponse {
 export interface AssignCardPayload {
     card_uuid: string;
     user_phone: string;
+    initial_balance?: string;
 }
 
 export interface TopUpCardPayload {

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MainLayout } from '../layout/MainLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { cardsApi } from '../api/cards';
 import { accountsApi } from '../api/accounts';
 import { storagesApi } from '../api/storages';
@@ -71,6 +72,122 @@ const Dashboard = () => {
     });
     const [recentActivity, setRecentActivity] = useState<TransactionWithMeta[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isScanning, setIsScanning] = useState(false);
+    const [scanStatus, setScanStatus] = useState<string>('');
+    const portRef = useRef<SerialPort | null>(null);
+    const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
+
+    const handleBeginScan = async () => {
+        setIsScanning(true);
+        setScanStatus('Initializing scan...');
+
+        // Check if Web Serial API is supported
+        if (!('serial' in navigator)) {
+            console.log('Web Serial API not supported in this browser');
+            setScanStatus('Web Serial API not supported. Using test data...');
+
+            // Use test JSON data
+            const testData = { card_uuid: "test-2c963f66afa6" };
+            console.log('Using test JSON data:', testData);
+            setScanStatus(`Test data received: ${JSON.stringify(testData)}`);
+            setIsScanning(false);
+            return;
+        }
+
+        try {
+            // Request a serial port
+            console.log('Requesting serial port...');
+            setScanStatus('Waiting for USB device selection...');
+
+            const port = await navigator.serial.requestPort();
+            portRef.current = port;
+
+            console.log('Serial port selected, opening connection...');
+            setScanStatus('USB device detected. Opening connection...');
+
+            // Open the serial port with common ESP32 settings
+            await port.open({ baudRate: 115200 });
+            console.log('Serial port opened successfully');
+            setScanStatus('Connected to ESP32. Listening for data...');
+
+            // Read data from the serial port
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            if (port.readable) {
+                const reader = port.readable.getReader();
+                readerRef.current = reader;
+
+                try {
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) {
+                            console.log('Serial port stream closed');
+                            break;
+                        }
+
+                        // Decode the received data
+                        const chunk = decoder.decode(value, { stream: true });
+                        buffer += chunk;
+                        console.log('Received chunk:', chunk);
+
+                        // Try to parse JSON from buffer (look for complete JSON objects)
+                        const jsonMatch = buffer.match(/\{[^{}]*\}/);
+                        if (jsonMatch) {
+                            try {
+                                const jsonData = JSON.parse(jsonMatch[0]);
+                                console.log('Parsed JSON data from ESP32:', jsonData);
+                                setScanStatus(`Data received: ${JSON.stringify(jsonData)}`);
+
+                                // Clear the matched part from buffer
+                                buffer = buffer.substring(buffer.indexOf(jsonMatch[0]) + jsonMatch[0].length);
+                            } catch (parseError) {
+                                console.log('JSON parse error, waiting for more data...');
+                            }
+                        }
+                    }
+                } catch (readError) {
+                    console.error('Error reading from serial port:', readError);
+                } finally {
+                    reader.releaseLock();
+                }
+            }
+        } catch (error) {
+            // User cancelled or no device selected
+            if (error instanceof DOMException && error.name === 'NotFoundError') {
+                console.log('No USB device selected by user');
+                setScanStatus('No USB device selected. Using test data...');
+            } else {
+                console.error('Error accessing serial port:', error);
+                setScanStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}. Using test data...`);
+            }
+
+            // Fallback to test JSON data
+            const testData = { card_uuid: "test-2c963f66afa6" };
+            console.log('Using test JSON data:', testData);
+            setScanStatus(`Test data received: ${JSON.stringify(testData)}`);
+        } finally {
+            setIsScanning(false);
+        }
+    };
+
+    const handleStopScan = async () => {
+        try {
+            if (readerRef.current) {
+                await readerRef.current.cancel();
+                readerRef.current = null;
+            }
+            if (portRef.current) {
+                await portRef.current.close();
+                portRef.current = null;
+            }
+            setScanStatus('Scan stopped');
+            console.log('Serial port closed');
+        } catch (error) {
+            console.error('Error closing serial port:', error);
+        }
+        setIsScanning(false);
+    };
 
     useEffect(() => {
         fetchDashboardData();
@@ -138,9 +255,27 @@ const Dashboard = () => {
     return (
         <MainLayout>
             <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-                    <p className="text-muted-foreground">Overview of system performance.</p>
+                <div className="flex items-start justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                        <p className="text-muted-foreground">Overview of system performance.</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                        {isScanning ? (
+                            <Button onClick={handleStopScan} variant="destructive">
+                                Stop Scan
+                            </Button>
+                        ) : (
+                            <Button onClick={handleBeginScan}>
+                                Begin Scan
+                            </Button>
+                        )}
+                        {scanStatus && (
+                            <p className="text-sm text-muted-foreground max-w-xs text-right">
+                                {scanStatus}
+                            </p>
+                        )}
+                    </div>
                 </div>
 
                 {/* Stats Grid */}
