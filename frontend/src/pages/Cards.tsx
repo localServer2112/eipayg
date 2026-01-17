@@ -42,8 +42,14 @@ const Cards: React.FC = () => {
         }
     };
 
-    const handleCreateCard = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleCreateCard = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+
+        if (!newCardUuid || !newCardPhone) {
+            toast.error('Please fill in all required fields');
+            return;
+        }
+
         try {
             await cardsApi.assign({
                 card_uuid: newCardUuid,
@@ -205,7 +211,7 @@ const Cards: React.FC = () => {
                         </div>
                         <div className="flex justify-end gap-2 mt-6">
                             <Button type="button" variant="ghost" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
-                            <Button type="submit">Assign Card</Button>
+                            <Button type="button" onClick={() => handleCreateCard()}>Assign Card</Button>
                         </div>
                     </form>
                 </Modal>

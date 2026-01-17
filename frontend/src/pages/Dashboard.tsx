@@ -142,15 +142,26 @@ const Dashboard = () => {
     };
 
     // Handle assign card form submission
-    const handleAssignCard = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleAssignCard = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+
+        if (!assignCardUuid || !assignUserPhone) {
+            toast.error('Please fill in all required fields');
+            return;
+        }
+
         setIsAssigning(true);
+
+        const payload = {
+            card_uuid: assignCardUuid,
+            user_phone: assignUserPhone,
+            initial_balance: assignInitialBalance || '0'
+        };
+        console.log('Assigning card with payload:', payload);
+
         try {
-            await cardsApi.assign({
-                card_uuid: assignCardUuid,
-                user_phone: assignUserPhone,
-                initial_balance: assignInitialBalance || '0'
-            });
+            const response = await cardsApi.assign(payload);
+            console.log('Assign response:', response);
             toast.success('Card assigned successfully');
             setIsAssignModalOpen(false);
             setAssignCardUuid('');
@@ -160,6 +171,10 @@ const Dashboard = () => {
             fetchDashboardData(); // Refresh dashboard data
         } catch (error: any) {
             console.error('Failed to assign card:', error);
+            console.error('Error response:', error.response);
+            console.error('Error response data:', error.response?.data);
+            console.error('Error status:', error.response?.status);
+
             const errorData = error.response?.data;
             let errorMessage = 'Failed to assign card';
             if (errorData) {
@@ -169,6 +184,12 @@ const Dashboard = () => {
                     errorMessage = errorData.error;
                 } else if (errorData.detail) {
                     errorMessage = errorData.detail;
+                } else if (errorData.card_uuid) {
+                    errorMessage = Array.isArray(errorData.card_uuid) ? errorData.card_uuid[0] : errorData.card_uuid;
+                } else if (errorData.user_phone) {
+                    errorMessage = Array.isArray(errorData.user_phone) ? errorData.user_phone[0] : errorData.user_phone;
+                } else if (errorData.non_field_errors) {
+                    errorMessage = Array.isArray(errorData.non_field_errors) ? errorData.non_field_errors[0] : errorData.non_field_errors;
                 } else {
                     errorMessage = JSON.stringify(errorData);
                 }
@@ -505,7 +526,7 @@ const Dashboard = () => {
                             <Button type="button" variant="ghost" onClick={() => setIsAssignModalOpen(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={isAssigning}>
+                            <Button type="button" disabled={isAssigning} onClick={() => handleAssignCard()}>
                                 {isAssigning ? 'Assigning...' : 'Assign Card'}
                             </Button>
                         </div>
