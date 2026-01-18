@@ -32,13 +32,17 @@ export const usersApi = {
      * List all users by fetching accounts and extracting user info
      */
     list: async (): Promise<{ data: User[] }> => {
+        console.log('usersApi.list: Fetching accounts...');
         const response = await accountsApi.list();
+        console.log('usersApi.list: Accounts response:', response);
         // @ts-ignore
         const accounts: Account[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
+        console.log('usersApi.list: Accounts extracted:', accounts);
 
         // Extract unique users from accounts
         const usersMap = new Map<string, User>();
         accounts.forEach(account => {
+            console.log('usersApi.list: Processing account:', account);
             if (account.user_info && account.user_info.uuid) {
                 if (!usersMap.has(account.user_info.uuid)) {
                     usersMap.set(account.user_info.uuid, {
@@ -50,7 +54,9 @@ export const usersApi = {
             }
         });
 
-        return { data: Array.from(usersMap.values()) };
+        const users = Array.from(usersMap.values());
+        console.log('usersApi.list: Users extracted:', users);
+        return { data: users };
     },
 
     /**

@@ -31,13 +31,16 @@ const Users: React.FC = () => {
     const fetchUsers = async () => {
         try {
             setIsLoading(true);
+            console.log('Fetching users...');
             const response = await usersApi.list();
-            // @ts-ignore
-            const results: User[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
+            console.log('Users response:', response);
+            const results: User[] = response.data || [];
+            console.log('Users extracted:', results);
             setUsers(results);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to fetch users:', error);
-            toast.error('Failed to load users');
+            console.error('Error response:', error.response?.data);
+            toast.error(error.response?.data?.detail || 'Failed to load users');
         } finally {
             setIsLoading(false);
         }
