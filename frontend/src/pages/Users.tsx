@@ -65,16 +65,19 @@ const Users: React.FC = () => {
 
         setIsRegistering(true);
 
+        const payload = {
+            first_name: firstName,
+            last_name: lastName,
+            phone: phone,
+            address: address,
+            user_type: 'USER' as const,
+            password: password,
+            password_confirm: passwordConfirm
+        };
+        console.log('Registering user with payload:', payload);
+
         try {
-            await usersApi.register({
-                first_name: firstName,
-                last_name: lastName,
-                phone: phone,
-                address: address,
-                user_type: 'USER',
-                password: password,
-                password_confirm: passwordConfirm
-            });
+            await usersApi.register(payload);
             toast.success('Member registered successfully');
             setIsRegisterModalOpen(false);
             resetForm();
@@ -84,25 +87,36 @@ const Users: React.FC = () => {
             console.error('Error response data:', error.response?.data);
 
             const errorData = error.response?.data;
-            let errorMessage = 'Failed to register user';
-            if (errorData) {
-                if (typeof errorData === 'string') {
-                    errorMessage = errorData;
-                } else if (errorData.error) {
-                    errorMessage = errorData.error;
-                } else if (errorData.phone) {
-                    errorMessage = Array.isArray(errorData.phone) ? errorData.phone[0] : errorData.phone;
-                } else if (errorData.password) {
-                    errorMessage = Array.isArray(errorData.password) ? errorData.password[0] : errorData.password;
-                } else if (errorData.detail) {
-                    errorMessage = errorData.detail;
-                } else if (errorData.non_field_errors) {
-                    errorMessage = Array.isArray(errorData.non_field_errors) ? errorData.non_field_errors[0] : errorData.non_field_errors;
-                } else {
-                    errorMessage = JSON.stringify(errorData);
+            if (errorData && typeof errorData === 'object') {
+                // Show all field errors
+                const fieldNames: Record<string, string> = {
+                    first_name: 'First Name',
+                    last_name: 'Last Name',
+                    phone: 'Phone',
+                    address: 'Address',
+                    password: 'Password',
+                    password_confirm: 'Confirm Password',
+                    user_type: 'User Type',
+                    non_field_errors: 'Error',
+                    detail: 'Error',
+                    error: 'Error'
+                };
+
+                let hasFieldError = false;
+                for (const [field, label] of Object.entries(fieldNames)) {
+                    if (errorData[field]) {
+                        const message = Array.isArray(errorData[field]) ? errorData[field][0] : errorData[field];
+                        toast.error(`${label}: ${message}`);
+                        hasFieldError = true;
+                    }
                 }
+
+                if (!hasFieldError) {
+                    toast.error(JSON.stringify(errorData));
+                }
+            } else {
+                toast.error('Failed to register user');
             }
-            toast.error(errorMessage);
         } finally {
             setIsRegistering(false);
         }
