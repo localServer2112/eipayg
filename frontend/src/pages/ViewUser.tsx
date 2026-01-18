@@ -36,6 +36,11 @@ const ViewUser: React.FC = () => {
 
             // Fetch user details
             const userResponse = await usersApi.get(uuid!);
+            if (!userResponse.data) {
+                toast.error('User not found');
+                setIsLoading(false);
+                return;
+            }
             setUser(userResponse.data);
 
             // Fetch all cards and filter by user phone
@@ -44,7 +49,7 @@ const ViewUser: React.FC = () => {
             const allCards: CardType[] = Array.isArray(cardsResponse.data) ? cardsResponse.data : (cardsResponse.data.results || []);
 
             // Filter cards that belong to this user (by phone)
-            const userCardsList = allCards.filter(card => card.user_phone === userResponse.data.phone);
+            const userCardsList = allCards.filter(card => card.user_phone === userResponse.data?.phone);
             setUserCards(userCardsList);
 
         } catch (error) {
@@ -164,10 +169,8 @@ const ViewUser: React.FC = () => {
                                 <p className="font-medium">{user.phone}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">User Type</p>
-                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${user.user_type === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                    {user.user_type}
-                                </span>
+                                <p className="text-sm text-muted-foreground">Balance</p>
+                                <p className="font-bold text-lg">{user.balance ? `₦${user.balance}` : '₦0'}</p>
                             </div>
                             <div className="col-span-2">
                                 <p className="text-sm text-muted-foreground">Address</p>

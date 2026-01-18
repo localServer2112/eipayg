@@ -1,15 +1,14 @@
 import api from './index';
+import { accountsApi, Account } from './accounts';
+import { UserInfo } from './types';
 
-// Types
-export interface User {
-    uuid: string;
-    first_name: string;
-    last_name: string;
-    phone: string;
-    address: string;
-    user_type: 'ADMIN' | 'USER';
+// Types - extending UserInfo with additional fields
+export interface User extends UserInfo {
+    user_type?: 'ADMIN' | 'USER';
     created?: string;
     updated?: string;
+    account_uuid?: string;
+    balance?: string;
 }
 
 export interface RegisterUserPayload {
@@ -30,16 +29,50 @@ export interface RegisterUserResponse {
 // Users API functions
 export const usersApi = {
     /**
-     * List all users
+     * List all users by fetching accounts and extracting user info
      */
-    list: () =>
-        api.get<User[]>('/api/users/'),
+    list: async (): Promise<{ data: User[] }> => {
+        const response = await accountsApi.list();
+        // @ts-ignore
+        const accounts: Account[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
+
+        // Extract unique users from accounts
+        const usersMap = new Map<string, User>();
+        accounts.forEach(account => {
+            if (account.user_info && account.user_info.uuid) {
+                if (!usersMap.has(account.user_info.uuid)) {
+                    usersMap.set(account.user_info.uuid, {
+                        ...account.user_info,
+                        account_uuid: account.uuid,
+                        balance: account.balance,
+                    });
+                }
+            }
+        });
+
+        return { data: Array.from(usersMap.values()) };
+    },
 
     /**
-     * Get specific user by UUID
+     * Get specific user by UUID from accounts
      */
-    get: (uuid: string) =>
-        api.get<User>(`/api/users/${uuid}/`),
+    get: async (uuid: string): Promise<{ data: User | null }> => {
+        const response = await accountsApi.list();
+        // @ts-ignore
+        const accounts: Account[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
+
+        const account = accounts.find(acc => acc.user_info?.uuid === uuid);
+        if (account && account.user_info) {
+            return {
+                data: {
+                    ...account.user_info,
+                    account_uuid: account.uuid,
+                    balance: account.balance,
+                }
+            };
+        }
+        return { data: null };
+    },
 
     /**
      * Register a new user (member)

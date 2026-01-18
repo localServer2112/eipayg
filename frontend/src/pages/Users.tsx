@@ -149,7 +149,7 @@ const Users: React.FC = () => {
                                     <th className="py-3 px-4 font-medium">Name</th>
                                     <th className="py-3 px-4 font-medium">Phone</th>
                                     <th className="py-3 px-4 font-medium">Address</th>
-                                    <th className="py-3 px-4 font-medium">Type</th>
+                                    <th className="py-3 px-4 font-medium">Balance</th>
                                     <th className="py-3 px-4 font-medium">Actions</th>
                                 </tr>
                             </thead>
@@ -168,11 +168,7 @@ const Users: React.FC = () => {
                                             <td className="py-3 px-4 font-medium">{user.first_name} {user.last_name}</td>
                                             <td className="py-3 px-4">{user.phone}</td>
                                             <td className="py-3 px-4">{user.address || '-'}</td>
-                                            <td className="py-3 px-4">
-                                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${user.user_type === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                    {user.user_type}
-                                                </span>
-                                            </td>
+                                            <td className="py-3 px-4 font-bold">{user.balance ? `₦${user.balance}` : '-'}</td>
                                             <td className="py-3 px-4">
                                                 <Button size="sm" variant="secondary">
                                                     <Link to={`/viewuser/${user.uuid}`}>View</Link>
