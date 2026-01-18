@@ -1,13 +1,16 @@
 import api from './index';
-import { accountsApi, Account } from './accounts';
-import { UserInfo } from './types';
+import { cardsApi, Card } from './cards';
 
-// Types - extending UserInfo with additional fields
-export interface User extends UserInfo {
+// Types for User
+export interface User {
+    uuid: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+    address: string;
     user_type?: 'ADMIN' | 'USER';
     created?: string;
     updated?: string;
-    account_uuid?: string;
     balance?: string;
 }
 
@@ -29,51 +32,51 @@ export interface RegisterUserResponse {
 // Users API functions
 export const usersApi = {
     /**
-     * List all users by fetching accounts and extracting user info
+     * List all users by fetching cards and extracting user info
      */
     list: async (): Promise<{ data: User[] }> => {
-        console.log('usersApi.list: Fetching accounts...');
-        const response = await accountsApi.list();
-        console.log('usersApi.list: Accounts response:', response);
+        const response = await cardsApi.list();
         // @ts-ignore
-        const accounts: Account[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
-        console.log('usersApi.list: Accounts extracted:', accounts);
+        const cards: Card[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
 
-        // Extract unique users from accounts
+        // Extract unique users from cards by phone
         const usersMap = new Map<string, User>();
-        accounts.forEach(account => {
-            console.log('usersApi.list: Processing account:', account);
-            if (account.user_info && account.user_info.uuid) {
-                if (!usersMap.has(account.user_info.uuid)) {
-                    usersMap.set(account.user_info.uuid, {
-                        ...account.user_info,
-                        account_uuid: account.uuid,
-                        balance: account.balance,
+        cards.forEach(card => {
+            if (card.user_info && card.user_info.uuid) {
+                if (!usersMap.has(card.user_info.uuid)) {
+                    usersMap.set(card.user_info.uuid, {
+                        uuid: card.user_info.uuid,
+                        first_name: card.user_info.first_name,
+                        last_name: card.user_info.last_name,
+                        phone: card.user_info.phone,
+                        address: card.user_info.address,
+                        balance: card.account_details?.balance,
                     });
                 }
             }
         });
 
-        const users = Array.from(usersMap.values());
-        console.log('usersApi.list: Users extracted:', users);
-        return { data: users };
+        return { data: Array.from(usersMap.values()) };
     },
 
     /**
-     * Get specific user by UUID from accounts
+     * Get specific user by UUID from cards
      */
     get: async (uuid: string): Promise<{ data: User | null }> => {
-        const response = await accountsApi.list();
+        const response = await cardsApi.list();
         // @ts-ignore
-        const accounts: Account[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
+        const cards: Card[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
 
-        const account = accounts.find(acc => acc.user_info?.uuid === uuid);
-        if (account && account.user_info) {
+        const card = cards.find(c => c.user_info?.uuid === uuid);
+        if (card && card.user_info) {
             return {
                 data: {
-                    ...account.user_info,
-                    account_uuid: account.uuid,
-                    balance: account.balance,
+                    uuid: card.user_info.uuid,
+                    first_name: card.user_info.first_name,
+                    last_name: card.user_info.last_name,
+                    phone: card.user_info.phone,
+                    address: card.user_info.address,
+                    balance: card.account_details?.balance,
                 }
             };
         }
