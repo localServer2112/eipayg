@@ -16,6 +16,8 @@ import Dashboard from './pages/Dashboard';
 import Cards from './pages/Cards';
 import CardDetails from './pages/CardDetails';
 import ViewCard from './pages/ViewCard';
+import Users from './pages/Users';
+import ViewUser from './pages/ViewUser';
 
 import Storage from './pages/Storage';
 import TopUp from './pages/TopUp';
@@ -77,6 +79,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <Storage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <Users />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/viewuser/:uuid"
+            element={
+              <ProtectedRoute>
+                <ViewUser />
               </ProtectedRoute>
             }
           />

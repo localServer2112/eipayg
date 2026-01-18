@@ -23,6 +23,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, showNavLinks =
 
     const navItems = [
         { label: 'Overview', path: '/dashboard' },
+        { label: 'Users', path: '/users' },
         { label: 'Cards', path: '/cards' },
         { label: 'Storage', path: '/storage' },
     ];
