@@ -31,11 +31,9 @@ const Users: React.FC = () => {
     const fetchUsers = async () => {
         try {
             setIsLoading(true);
-            console.log('Fetching users...');
             const response = await usersApi.list();
-            console.log('Users response:', response);
-            const results: User[] = response.data || [];
-            console.log('Users extracted:', results);
+            // @ts-ignore - handle both array and paginated response
+            const results: User[] = Array.isArray(response.data) ? response.data : (response.data?.results || []);
             setUsers(results);
         } catch (error: any) {
             console.error('Failed to fetch users:', error);
