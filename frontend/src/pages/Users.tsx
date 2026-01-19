@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { MainLayout } from '../layout/MainLayout';
 import { Card as UICard, CardHeader, CardContent } from '@/components/ui/card';
@@ -165,17 +164,16 @@ const Users: React.FC = () => {
                                     <th className="py-3 px-4 font-medium">Phone</th>
                                     <th className="py-3 px-4 font-medium">Address</th>
                                     <th className="py-3 px-4 font-medium">Balance</th>
-                                    <th className="py-3 px-4 font-medium">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {isLoading ? (
                                     <tr>
-                                        <td colSpan={5} className="text-center py-8">Loading users...</td>
+                                        <td colSpan={4} className="text-center py-8">Loading users...</td>
                                     </tr>
                                 ) : filteredUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="text-center py-8">No users found</td>
+                                        <td colSpan={4} className="text-center py-8">No users found</td>
                                     </tr>
                                 ) : (
                                     filteredUsers.map(user => (
@@ -184,11 +182,6 @@ const Users: React.FC = () => {
                                             <td className="py-3 px-4">{user.phone}</td>
                                             <td className="py-3 px-4">{user.address || '-'}</td>
                                             <td className="py-3 px-4 font-bold">{user.balance ? `₦${user.balance}` : '-'}</td>
-                                            <td className="py-3 px-4">
-                                                <Button size="sm" variant="secondary">
-                                                    <Link to={`/viewcard/${user.card_uuid}`}>View</Link>
-                                                </Button>
-                                            </td>
                                         </tr>
                                     ))
                                 )}
