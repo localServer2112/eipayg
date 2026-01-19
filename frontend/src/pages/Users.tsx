@@ -186,7 +186,7 @@ const Users: React.FC = () => {
                                             <td className="py-3 px-4 font-bold">{user.balance ? `₦${user.balance}` : '-'}</td>
                                             <td className="py-3 px-4">
                                                 <Button size="sm" variant="secondary">
-                                                    <Link to={`/viewuser/${user.uuid}`}>View</Link>
+                                                    <Link to={`/viewcard/${user.card_uuid}`}>View</Link>
                                                 </Button>
                                             </td>
                                         </tr>

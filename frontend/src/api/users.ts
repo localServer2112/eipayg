@@ -13,6 +13,7 @@ export interface User {
     created?: string;
     updated?: string;
     balance?: string;
+    card_uuid?: string; // Associated card UUID for navigation
 }
 
 export interface RegisterUserPayload {
@@ -54,6 +55,7 @@ export const usersApi = {
                         phone: card.user_info.phone || card.user_phone || '',
                         address: card.user_info.address || '',
                         balance: card.account_details?.balance,
+                        card_uuid: card.uuid,
                     });
                 }
             }
@@ -67,6 +69,7 @@ export const usersApi = {
                         phone: card.user_phone,
                         address: '',
                         balance: card.account_details?.balance || card.balance,
+                        card_uuid: card.uuid,
                     });
                 }
             }
