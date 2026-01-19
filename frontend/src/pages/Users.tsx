@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { MainLayout } from '../layout/MainLayout';
 import { Card as UICard, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,13 @@ import { Modal } from '@/components/ui/modal';
 import { usersApi, User } from '../api/users';
 import { toast } from 'sonner';
 
+const ITEMS_PER_PAGE = 10;
+
 const Users: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
     const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
     const [isRegistering, setIsRegistering] = useState(false);
 
@@ -133,6 +136,17 @@ const Users: React.FC = () => {
         );
     });
 
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+    // Reset to page 1 when search term changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
+
     return (
         <MainLayout>
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
@@ -176,7 +190,7 @@ const Users: React.FC = () => {
                                         <td colSpan={4} className="text-center py-8">No users found</td>
                                     </tr>
                                 ) : (
-                                    filteredUsers.map(user => (
+                                    paginatedUsers.map(user => (
                                         <tr key={user.uuid} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
                                             <td className="py-3 px-4 font-medium">{user.first_name} {user.last_name}</td>
                                             <td className="py-3 px-4">{user.phone}</td>
@@ -188,6 +202,38 @@ const Users: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination Controls */}
+                    {filteredUsers.length > ITEMS_PER_PAGE && (
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                            <p className="text-sm text-muted-foreground">
+                                Showing {startIndex + 1} to {Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                    Previous
+                                </Button>
+                                <span className="text-sm text-muted-foreground px-2">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </UICard>
 
