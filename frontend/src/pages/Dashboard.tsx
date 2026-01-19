@@ -116,11 +116,12 @@ const Dashboard = () => {
             const cards: CardType[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
 
             const existingCard = cards.find(card => card.uuid === cardUuid);
+            const isAssigned = existingCard && (existingCard.user_phone || existingCard.user_info?.phone);
 
-            if (existingCard && existingCard.user_phone) {
+            if (isAssigned) {
                 // Card is already assigned - navigate to view card page
-                setScanStatus(`Card assigned. Redirecting to card details...`);
-                toast.info(`Card found! Viewing details...`);
+                setScanStatus(`Card assigned. Redirecting to user profile...`);
+                toast.success(`Card found! Opening user profile...`);
                 navigate(`/viewcard/${existingCard.uuid}`);
             } else {
                 // Card not assigned - open modal with pre-filled UUID
