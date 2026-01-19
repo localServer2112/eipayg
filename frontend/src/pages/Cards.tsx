@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { MainLayout } from '../layout/MainLayout';
 import { Card as UICard, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,13 @@ import { Modal } from '@/components/ui/modal';
 import { cardsApi, Card } from '../api/cards';
 import { toast } from 'sonner';
 
+const ITEMS_PER_PAGE = 10;
+
 const Cards: React.FC = () => {
     const [cards, setCards] = useState<Card[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // New Card Form State - Simplified for now
@@ -113,6 +116,17 @@ const Cards: React.FC = () => {
         );
     });
 
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredCards.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const paginatedCards = filteredCards.slice(startIndex, endIndex);
+
+    // Reset to page 1 when search term changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
+
     return (
         <MainLayout>
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
@@ -158,7 +172,7 @@ const Cards: React.FC = () => {
                                         <td colSpan={6} className="text-center py-8">No cards found</td>
                                     </tr>
                                 ) : (
-                                    filteredCards.map(card => (
+                                    paginatedCards.map(card => (
                                         <tr key={card.uuid} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
                                             <td className="py-3 px-4 font-mono text-xs">{card.uuid}</td>
                                             <td className="py-3 px-4">{card.name_on_card || '-'}</td>
@@ -190,6 +204,38 @@ const Cards: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination Controls */}
+                    {filteredCards.length > ITEMS_PER_PAGE && (
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                            <p className="text-sm text-muted-foreground">
+                                Showing {startIndex + 1} to {Math.min(endIndex, filteredCards.length)} of {filteredCards.length} cards
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                    Previous
+                                </Button>
+                                <span className="text-sm text-muted-foreground px-2">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </UICard>
 
