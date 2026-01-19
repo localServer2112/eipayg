@@ -41,42 +41,50 @@ export const usersApi = {
         // @ts-ignore
         const cards: Card[] = Array.isArray(response.data) ? response.data : (response.data?.results || []);
 
-        // Get unique card UUIDs to fetch detailed info
-        const cardUuids = cards.map(card => card.uuid).filter(Boolean);
+        // Only process cards that are assigned (have user_phone)
+        const assignedCards = cards.filter(card => card.user_phone);
 
-        // Fetch detailed info for each card to get user_info and account_details
-        const detailedCardsPromises = cardUuids.map(async (uuid) => {
+        // Fetch detailed info for assigned cards only
+        const detailedCardsPromises = assignedCards.map(async (card) => {
             try {
-                const infoResponse = await cardsApi.getInfo({ card_uuid: uuid });
-                return infoResponse.data;
+                const infoResponse = await cardsApi.getInfo({ card_uuid: card.uuid });
+                return { card, details: infoResponse.data };
             } catch (error) {
-                console.error(`Failed to fetch info for card ${uuid}:`, error);
-                return null;
+                // Fallback to basic card data if detailed fetch fails
+                return { card, details: null };
             }
         });
 
-        const detailedCards = await Promise.all(detailedCardsPromises);
+        const results = await Promise.all(detailedCardsPromises);
 
-        // Extract unique users from detailed cards
+        // Extract unique users
         const usersMap = new Map<string, User>();
 
-        detailedCards.forEach((cardInfo) => {
-            if (!cardInfo) return;
-
-            // Get balance from account_details
-            const balance = cardInfo.account_details?.balance || '';
-
-            // Get user from user_info
-            if (cardInfo.user_info?.uuid) {
-                if (!usersMap.has(cardInfo.user_info.uuid)) {
-                    usersMap.set(cardInfo.user_info.uuid, {
-                        uuid: cardInfo.user_info.uuid,
-                        first_name: cardInfo.user_info.first_name || '',
-                        last_name: cardInfo.user_info.last_name || '',
-                        phone: cardInfo.user_info.phone || '',
-                        address: cardInfo.user_info.address || '',
-                        balance: balance,
-                        card_uuid: cardInfo.uuid,
+        results.forEach(({ card, details }) => {
+            // Use detailed info if available, otherwise fallback to card data
+            if (details?.user_info?.uuid) {
+                if (!usersMap.has(details.user_info.uuid)) {
+                    usersMap.set(details.user_info.uuid, {
+                        uuid: details.user_info.uuid,
+                        first_name: details.user_info.first_name || '',
+                        last_name: details.user_info.last_name || '',
+                        phone: details.user_info.phone || card.user_phone || '',
+                        address: details.user_info.address || '',
+                        balance: details.account_details?.balance || card.balance || '',
+                        card_uuid: card.uuid,
+                    });
+                }
+            } else if (card.user_phone) {
+                // Fallback: use card data when detailed info not available
+                if (!usersMap.has(card.user_phone)) {
+                    usersMap.set(card.user_phone, {
+                        uuid: card.user_phone,
+                        first_name: card.user_name?.split(' ')[0] || card.name_on_card?.split(' ')[0] || '',
+                        last_name: card.user_name?.split(' ').slice(1).join(' ') || card.name_on_card?.split(' ').slice(1).join(' ') || '',
+                        phone: card.user_phone,
+                        address: '',
+                        balance: card.balance || '',
+                        card_uuid: card.uuid,
                     });
                 }
             }
@@ -97,7 +105,7 @@ export const usersApi = {
         const card = cards.find(c => c.user_phone === identifier);
 
         if (card) {
-            // Fetch detailed card info to get user_info and account_details
+            // Try to fetch detailed card info
             try {
                 const infoResponse = await cardsApi.getInfo({ card_uuid: card.uuid });
                 const cardInfo = infoResponse.data;
@@ -108,16 +116,29 @@ export const usersApi = {
                             uuid: cardInfo.user_info.uuid,
                             first_name: cardInfo.user_info.first_name || '',
                             last_name: cardInfo.user_info.last_name || '',
-                            phone: cardInfo.user_info.phone || '',
+                            phone: cardInfo.user_info.phone || card.user_phone || '',
                             address: cardInfo.user_info.address || '',
-                            balance: cardInfo.account_details?.balance || '',
-                            card_uuid: cardInfo.uuid,
+                            balance: cardInfo.account_details?.balance || card.balance || '',
+                            card_uuid: card.uuid,
                         }
                     };
                 }
             } catch (error) {
-                console.error(`Failed to fetch info for card ${card.uuid}:`, error);
+                // Fallback to basic card data
             }
+
+            // Fallback: return user from basic card data
+            return {
+                data: {
+                    uuid: card.user_phone || card.uuid,
+                    first_name: card.user_name?.split(' ')[0] || card.name_on_card?.split(' ')[0] || '',
+                    last_name: card.user_name?.split(' ').slice(1).join(' ') || card.name_on_card?.split(' ').slice(1).join(' ') || '',
+                    phone: card.user_phone || '',
+                    address: '',
+                    balance: card.balance || '',
+                    card_uuid: card.uuid,
+                }
+            };
         }
         return { data: null };
     },
