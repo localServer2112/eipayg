@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { MainLayout } from '../layout/MainLayout';
 import { Card as UICard, CardHeader, CardContent } from '@/components/ui/card';
@@ -8,14 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { cardsApi, Card } from '../api/cards';
 import { toast } from 'sonner';
-import AddUnitModal from './ViewComp/AddUnitModal';
 
 const Cards: React.FC = () => {
     const [cards, setCards] = useState<Card[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [topupCardUuid, setTopupCardUuid] = useState<string | null>(null);
 
     // New Card Form State - Simplified for now
     const [newCardUuid, setNewCardUuid] = useState('');
@@ -90,6 +87,21 @@ const Cards: React.FC = () => {
         }
     };
 
+    const handleSuspendCard = async (cardUuid: string, currentlyBlocked: boolean) => {
+        try {
+            await cardsApi.block({
+                card_uuid: cardUuid,
+                is_blocked: !currentlyBlocked
+            });
+            toast.success(currentlyBlocked ? 'Card activated successfully' : 'Card suspended successfully');
+            fetchCards(); // Refresh list
+        } catch (error: any) {
+            console.error('Failed to update card status:', error);
+            const errorMessage = error.response?.data?.error || error.response?.data?.detail || 'Failed to update card status';
+            toast.error(errorMessage);
+        }
+    };
+
     const filteredCards = cards.filter(card => {
         if (!searchTerm.trim()) return true;
         const search = searchTerm.toLowerCase().trim();
@@ -160,9 +172,14 @@ const Cards: React.FC = () => {
                                                     {!card.is_blocked ? 'Active' : 'Blocked'}
                                                 </span>
                                             </td>
-                                            <td className="py-3 px-4 flex gap-2">
-                                                <Button size="sm" variant="secondary"><Link to={`/viewcard/${card.uuid}`}>View</Link></Button>
-                                                <Button size="sm" variant="secondary" onClick={() => setTopupCardUuid(card.uuid)}>Top-up</Button>
+                                            <td className="py-3 px-4">
+                                                <Button
+                                                    size="sm"
+                                                    variant={card.is_blocked ? "secondary" : "destructive"}
+                                                    onClick={() => handleSuspendCard(card.uuid, card.is_blocked)}
+                                                >
+                                                    {card.is_blocked ? 'Activate' : 'Suspend'}
+                                                </Button>
                                             </td>
                                         </tr>
                                     ))
@@ -217,13 +234,6 @@ const Cards: React.FC = () => {
                 </Modal>
             )}
 
-            {topupCardUuid && (
-                <AddUnitModal
-                    cardUuid={topupCardUuid}
-                    onClose={() => setTopupCardUuid(null)}
-                    onSuccess={fetchCards}
-                />
-            )}
         </MainLayout>
     );
 };
