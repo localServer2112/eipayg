@@ -34,42 +34,49 @@ export interface RegisterUserResponse {
 // Users API functions
 export const usersApi = {
     /**
-     * List all users by extracting from cards
+     * List all users by extracting from cards with full details
      */
     list: async (): Promise<{ data: User[] }> => {
         const response = await cardsApi.list();
         // @ts-ignore
         const cards: Card[] = Array.isArray(response.data) ? response.data : (response.data?.results || []);
 
-        // Extract unique users from cards
+        // Get unique card UUIDs to fetch detailed info
+        const cardUuids = cards.map(card => card.uuid).filter(Boolean);
+
+        // Fetch detailed info for each card to get user_info and account_details
+        const detailedCardsPromises = cardUuids.map(async (uuid) => {
+            try {
+                const infoResponse = await cardsApi.getInfo({ card_uuid: uuid });
+                return infoResponse.data;
+            } catch (error) {
+                console.error(`Failed to fetch info for card ${uuid}:`, error);
+                return null;
+            }
+        });
+
+        const detailedCards = await Promise.all(detailedCardsPromises);
+
+        // Extract unique users from detailed cards
         const usersMap = new Map<string, User>();
 
-        cards.forEach(card => {
-            // Try to get user from user_info first
-            if (card.user_info?.uuid) {
-                if (!usersMap.has(card.user_info.uuid)) {
-                    usersMap.set(card.user_info.uuid, {
-                        uuid: card.user_info.uuid,
-                        first_name: card.user_info.first_name || '',
-                        last_name: card.user_info.last_name || '',
-                        phone: card.user_info.phone || card.user_phone || '',
-                        address: card.user_info.address || '',
-                        balance: card.account_details?.balance,
-                        card_uuid: card.uuid,
-                    });
-                }
-            }
-            // Fallback: use user_phone as identifier if user_info not available
-            else if (card.user_phone) {
-                if (!usersMap.has(card.user_phone)) {
-                    usersMap.set(card.user_phone, {
-                        uuid: card.user_phone, // Use phone as UUID fallback
-                        first_name: card.user_name?.split(' ')[0] || card.name_on_card?.split(' ')[0] || '',
-                        last_name: card.user_name?.split(' ').slice(1).join(' ') || card.name_on_card?.split(' ').slice(1).join(' ') || '',
-                        phone: card.user_phone,
-                        address: '',
-                        balance: card.account_details?.balance || card.balance,
-                        card_uuid: card.uuid,
+        detailedCards.forEach((cardInfo) => {
+            if (!cardInfo) return;
+
+            // Get balance from account_details
+            const balance = cardInfo.account_details?.balance || '';
+
+            // Get user from user_info
+            if (cardInfo.user_info?.uuid) {
+                if (!usersMap.has(cardInfo.user_info.uuid)) {
+                    usersMap.set(cardInfo.user_info.uuid, {
+                        uuid: cardInfo.user_info.uuid,
+                        first_name: cardInfo.user_info.first_name || '',
+                        last_name: cardInfo.user_info.last_name || '',
+                        phone: cardInfo.user_info.phone || '',
+                        address: cardInfo.user_info.address || '',
+                        balance: balance,
+                        card_uuid: cardInfo.uuid,
                     });
                 }
             }
@@ -86,35 +93,30 @@ export const usersApi = {
         // @ts-ignore
         const cards: Card[] = Array.isArray(response.data) ? response.data : (response.data?.results || []);
 
-        // Find card by user_info.uuid or user_phone
-        const card = cards.find(c =>
-            c.user_info?.uuid === identifier ||
-            c.user_phone === identifier
-        );
+        // Find card by user_phone (since user_info might not be in list response)
+        const card = cards.find(c => c.user_phone === identifier);
 
         if (card) {
-            if (card.user_info) {
-                return {
-                    data: {
-                        uuid: card.user_info.uuid,
-                        first_name: card.user_info.first_name || '',
-                        last_name: card.user_info.last_name || '',
-                        phone: card.user_info.phone || card.user_phone || '',
-                        address: card.user_info.address || '',
-                        balance: card.account_details?.balance,
-                    }
-                };
-            } else if (card.user_phone) {
-                return {
-                    data: {
-                        uuid: card.user_phone,
-                        first_name: card.user_name?.split(' ')[0] || card.name_on_card?.split(' ')[0] || '',
-                        last_name: card.user_name?.split(' ').slice(1).join(' ') || card.name_on_card?.split(' ').slice(1).join(' ') || '',
-                        phone: card.user_phone,
-                        address: '',
-                        balance: card.account_details?.balance || card.balance,
-                    }
-                };
+            // Fetch detailed card info to get user_info and account_details
+            try {
+                const infoResponse = await cardsApi.getInfo({ card_uuid: card.uuid });
+                const cardInfo = infoResponse.data;
+
+                if (cardInfo.user_info) {
+                    return {
+                        data: {
+                            uuid: cardInfo.user_info.uuid,
+                            first_name: cardInfo.user_info.first_name || '',
+                            last_name: cardInfo.user_info.last_name || '',
+                            phone: cardInfo.user_info.phone || '',
+                            address: cardInfo.user_info.address || '',
+                            balance: cardInfo.account_details?.balance || '',
+                            card_uuid: cardInfo.uuid,
+                        }
+                    };
+                }
+            } catch (error) {
+                console.error(`Failed to fetch info for card ${card.uuid}:`, error);
             }
         }
         return { data: null };

@@ -143,7 +143,7 @@ const Cards: React.FC = () => {
                                     <th className="py-3 px-4 font-medium">Card UUID</th>
                                     <th className="py-3 px-4 font-medium">Name on Card</th>
                                     <th className="py-3 px-4 font-medium">User Phone</th>
-                                    <th className="py-3 px-4 font-medium">Balance</th>
+                                    <th className="py-3 px-4 font-medium">Assignment</th>
                                     <th className="py-3 px-4 font-medium">Status</th>
                                     <th className="py-3 px-4 font-medium">Actions</th>
                                 </tr>
@@ -161,10 +161,13 @@ const Cards: React.FC = () => {
                                     filteredCards.map(card => (
                                         <tr key={card.uuid} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
                                             <td className="py-3 px-4 font-mono text-xs">{card.uuid}</td>
-                                            <td className="py-3 px-4">{card.name_on_card}</td>
+                                            <td className="py-3 px-4">{card.name_on_card || '-'}</td>
                                             <td className="py-3 px-4">{card.user_phone || card.user_info?.phone || '-'}</td>
-                                            <td className="py-3 px-4 font-bold">
-                                                {card.balance ? `₦${card.balance}` : card.account_details?.balance ? `₦${card.account_details.balance}` : '-'}
+                                            <td className="py-3 px-4">
+                                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${card.user_phone || card.user_info?.phone ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${card.user_phone || card.user_info?.phone ? 'bg-blue-600' : 'bg-gray-400'}`}></span>
+                                                    {card.user_phone || card.user_info?.phone ? 'Assigned' : 'Unassigned'}
+                                                </span>
                                             </td>
                                             <td className="py-3 px-4">
                                                 <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${!card.is_blocked ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
