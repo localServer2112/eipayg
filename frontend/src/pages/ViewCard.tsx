@@ -76,7 +76,7 @@ const ViewCard = () => {
     <MainLayout showNavLinks={false}>
       <div className="min-h-screen p-6 sm:p-8 lg:p-2 max-w-7xl mx-auto">
         <div>
-          <button onClick={() => navigate('/cards')} className="top flex items-center gap-2 mb-4 text-gray-600 hover:text-gray-900 transition-colors">
+          <button onClick={() => navigate(-1)} className="top flex items-center gap-2 mb-4 text-gray-600 hover:text-gray-900 transition-colors">
             <img src={arrowLeft} alt="" width="18.67" height="18.67" />
             <p>Back</p>
           </button>

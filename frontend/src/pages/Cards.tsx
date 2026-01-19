@@ -121,7 +121,7 @@ const Cards: React.FC = () => {
                     <p className="text-muted-foreground">Manage NFC cards and accounts</p>
                 </div>
                 <Button onClick={() => setIsCreateModalOpen(true)} className="bg-black text-white hover:bg-gray-800">
-                    <Plus className="mr-2 h-4 w-4" /> Create New Card
+                    <Plus className="mr-2 h-4 w-4" /> Assign Card
                 </Button>
             </div>
 
