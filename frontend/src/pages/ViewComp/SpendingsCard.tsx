@@ -9,9 +9,10 @@ import autoTable from "jspdf-autotable";
 interface SpendingsCardProps {
   storageLogs: StorageEntry[];
   onRefresh: () => void;
+  balance?: string;
 }
 
-const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh }) => {
+const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh, balance }) => {
   const [checkoutStorageId, setCheckoutStorageId] = useState<string | null>(null);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -331,6 +332,8 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh })
               const now = Date.now();
               const durationHours = (now - checkInTime) / (1000 * 60 * 60);
               const estimatedCost = durationHours * parseFloat(storage.hourly_rate);
+              const currentBalance = parseFloat(balance || '0');
+              const hasInsufficientBalance = currentBalance < estimatedCost;
 
               return (
                 <>
@@ -347,7 +350,20 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh })
                     <p className="text-lg font-bold pt-2 border-t">
                       Estimated Cost: ₦{estimatedCost.toFixed(2)}
                     </p>
+                    {balance && (
+                      <p className={`font-medium ${hasInsufficientBalance ? 'text-red-600' : 'text-green-600'}`}>
+                        Current Balance: ₦{currentBalance.toFixed(2)}
+                      </p>
+                    )}
                   </div>
+
+                  {hasInsufficientBalance && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                      <p className="text-red-700 text-sm font-medium">
+                        Insufficient balance. You need ₦{(estimatedCost - currentBalance).toFixed(2)} more to checkout this item.
+                      </p>
+                    </div>
+                  )}
 
                   <div className="flex justify-end gap-3">
                     <button
@@ -358,8 +374,8 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh })
                     </button>
                     <button
                       onClick={() => handleCheckout(checkoutStorageId)}
-                      disabled={isCheckingOut}
-                      className="px-6 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+                      disabled={isCheckingOut || hasInsufficientBalance}
+                      className="px-6 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isCheckingOut ? 'Processing...' : 'Confirm Checkout'}
                     </button>

@@ -18,8 +18,8 @@ const Storage: React.FC = () => {
     const [cardUuid, setCardUuid] = useState('');
     const [commodity, setCommodity] = useState('');
     const [weight, setWeight] = useState('');
-    const [hourlyRate, setHourlyRate] = useState('');
-    const [estimatedHours, setEstimatedHours] = useState('24');
+    const [dailyRate, setDailyRate] = useState('');
+    const [estimatedDays, setEstimatedDays] = useState('1');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Checkout modal state
@@ -60,7 +60,12 @@ const Storage: React.FC = () => {
 
             const now = new Date();
             const checkIn = now.toISOString();
-            const estimatedCheckout = new Date(now.getTime() + parseInt(estimatedHours) * 60 * 60 * 1000).toISOString();
+            // Calculate check-out based on estimated days (days * 24 hours)
+            const estimatedHours = parseFloat(estimatedDays) * 24;
+            const estimatedCheckout = new Date(now.getTime() + estimatedHours * 60 * 60 * 1000).toISOString();
+
+            // Calculate hourly rate from daily rate (daily / 24)
+            const hourlyRate = (parseFloat(dailyRate) / 24).toString();
 
             await storagesApi.create({
                 account_uuid: accountUuid,
@@ -131,8 +136,8 @@ const Storage: React.FC = () => {
         setCardUuid('');
         setCommodity('');
         setWeight('');
-        setHourlyRate('');
-        setEstimatedHours('24');
+        setDailyRate('');
+        setEstimatedDays('1');
     };
 
     const formatDate = (dateString: string) => {
@@ -170,12 +175,12 @@ const Storage: React.FC = () => {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Avg Hourly Rate</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Avg Daily Rate</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
                             ₦{storageItems.length > 0
-                                ? (storageItems.reduce((sum, item) => sum + parseFloat(item.hourly_rate || '0'), 0) / storageItems.length).toFixed(2)
+                                ? (storageItems.reduce((sum, item) => sum + (parseFloat(item.hourly_rate || '0') * 24), 0) / storageItems.length).toFixed(2)
                                 : '0.00'}
                         </div>
                     </CardContent>
@@ -193,10 +198,10 @@ const Storage: React.FC = () => {
                                 <tr>
                                     <th className="py-3 px-4 font-medium">Commodity</th>
                                     <th className="py-3 px-4 font-medium">Weight (kg)</th>
-                                    <th className="py-3 px-4 font-medium">Hourly Rate</th>
+                                    <th className="py-3 px-4 font-medium">Daily Rate</th>
                                     <th className="py-3 px-4 font-medium">Check-in Time</th>
                                     <th className="py-3 px-4 font-medium">Est. Checkout</th>
-                                    <th className="py-3 px-4 font-medium">Duration (hrs)</th>
+                                    <th className="py-3 px-4 font-medium">Duration (days)</th>
                                     <th className="py-3 px-4 font-medium">Status</th>
                                     <th className="py-3 px-4 font-medium">Actions</th>
                                 </tr>
@@ -215,10 +220,10 @@ const Storage: React.FC = () => {
                                         <tr key={item.uuid} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
                                             <td className="py-3 px-4 font-medium">{item.commodity}</td>
                                             <td className="py-3 px-4">{item.weight}</td>
-                                            <td className="py-3 px-4">₦{item.hourly_rate}</td>
+                                            <td className="py-3 px-4">₦{(parseFloat(item.hourly_rate || '0') * 24).toFixed(2)}</td>
                                             <td className="py-3 px-4 text-muted-foreground">{formatDate(item.check_in)}</td>
                                             <td className="py-3 px-4 text-muted-foreground">{formatDate(item.estimated_check_out)}</td>
-                                            <td className="py-3 px-4">{item.duration_hours?.toFixed(1) || '-'}</td>
+                                            <td className="py-3 px-4">{((item.duration_hours || 0) / 24).toFixed(1) || '-'}</td>
                                             <td className="py-3 px-4">
                                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.is_active ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>
                                                     {item.is_active ? 'Stored' : 'Checked Out'}
@@ -281,26 +286,26 @@ const Storage: React.FC = () => {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium" htmlFor="hourlyRate">Hourly Rate (₦)</label>
+                            <label className="text-sm font-medium" htmlFor="dailyRate">Daily Rate (₦)</label>
                             <Input
-                                id="hourlyRate"
+                                id="dailyRate"
                                 type="number"
                                 step="0.01"
-                                value={hourlyRate}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHourlyRate(e.target.value)}
-                                placeholder="100"
+                                value={dailyRate}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDailyRate(e.target.value)}
+                                placeholder="2400"
                                 required
                             />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-medium" htmlFor="estimatedHours">Estimated Storage Duration (hours)</label>
+                        <label className="text-sm font-medium" htmlFor="estimatedDays">Estimated Storage Duration (days)</label>
                         <Input
-                            id="estimatedHours"
+                            id="estimatedDays"
                             type="number"
-                            value={estimatedHours}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEstimatedHours(e.target.value)}
-                            placeholder="24"
+                            value={estimatedDays}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEstimatedDays(e.target.value)}
+                            placeholder="1"
                             required
                         />
                     </div>
@@ -314,32 +319,50 @@ const Storage: React.FC = () => {
             </Modal>
 
             {/* Checkout Confirmation Modal */}
-            {checkoutStorage && (
-                <Modal
-                    isOpen={!!checkoutStorage}
-                    onClose={() => setCheckoutStorage(null)}
-                    title="Confirm Checkout"
-                >
-                    <div className="space-y-4">
-                        <p>Are you sure you want to checkout this item?</p>
-                        <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                            <p><span className="font-medium">Commodity:</span> {checkoutStorage.commodity}</p>
-                            <p><span className="font-medium">Weight:</span> {checkoutStorage.weight} kg</p>
-                            <p><span className="font-medium">Hourly Rate:</span> ₦{checkoutStorage.hourly_rate}</p>
-                            <p><span className="font-medium">Duration:</span> {checkoutStorage.duration_hours?.toFixed(1)} hours</p>
-                            <p className="text-lg font-bold">
-                                Estimated Cost: ₦{((checkoutStorage.duration_hours || 0) * parseFloat(checkoutStorage.hourly_rate)).toFixed(2)}
-                            </p>
+            {checkoutStorage && (() => {
+                const estimatedCost = (checkoutStorage.duration_hours || 0) * parseFloat(checkoutStorage.hourly_rate);
+                const accountBalance = parseFloat(checkoutStorage.account_balance || '0');
+                const hasInsufficientBalance = checkoutStorage.account_balance !== undefined && accountBalance < estimatedCost;
+
+                return (
+                    <Modal
+                        isOpen={!!checkoutStorage}
+                        onClose={() => setCheckoutStorage(null)}
+                        title="Confirm Checkout"
+                    >
+                        <div className="space-y-4">
+                            <p>Are you sure you want to checkout this item?</p>
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                                <p><span className="font-medium">Commodity:</span> {checkoutStorage.commodity}</p>
+                                <p><span className="font-medium">Weight:</span> {checkoutStorage.weight} kg</p>
+                                <p><span className="font-medium">Daily Rate:</span> ₦{(parseFloat(checkoutStorage.hourly_rate || '0') * 24).toFixed(2)}</p>
+                                <p><span className="font-medium">Duration:</span> {((checkoutStorage.duration_hours || 0) / 24).toFixed(1)} days</p>
+                                <p className="text-lg font-bold">
+                                    Estimated Cost: ₦{estimatedCost.toFixed(2)}
+                                </p>
+                                {checkoutStorage.account_balance !== undefined && (
+                                    <p className={`font-medium ${hasInsufficientBalance ? 'text-red-600' : 'text-green-600'}`}>
+                                        Account Balance: ₦{accountBalance.toFixed(2)}
+                                    </p>
+                                )}
+                            </div>
+                            {hasInsufficientBalance && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                    <p className="text-red-700 text-sm font-medium">
+                                        Insufficient balance. The account needs ₦{(estimatedCost - accountBalance).toFixed(2)} more to checkout this item.
+                                    </p>
+                                </div>
+                            )}
+                            <div className="flex justify-end gap-2">
+                                <Button variant="ghost" onClick={() => setCheckoutStorage(null)}>Cancel</Button>
+                                <Button onClick={handleCheckout} disabled={isCheckingOut || hasInsufficientBalance}>
+                                    {isCheckingOut ? 'Processing...' : 'Confirm Checkout'}
+                                </Button>
+                            </div>
                         </div>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="ghost" onClick={() => setCheckoutStorage(null)}>Cancel</Button>
-                            <Button onClick={handleCheckout} disabled={isCheckingOut}>
-                                {isCheckingOut ? 'Processing...' : 'Confirm Checkout'}
-                            </Button>
-                        </div>
-                    </div>
-                </Modal>
-            )}
+                    </Modal>
+                );
+            })()}
         </MainLayout>
     );
 };

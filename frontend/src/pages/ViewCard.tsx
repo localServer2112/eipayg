@@ -103,6 +103,7 @@ const ViewCard = () => {
                 <SpendingsCard
                   storageLogs={cardDetails.account_details?.storage_activities || []}
                   onRefresh={fetchCardDetails}
+                  balance={cardDetails.account_details?.balance}
                 />
               </div>
             </div>
