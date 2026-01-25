@@ -284,16 +284,14 @@ const Dashboard = () => {
             // User cancelled or no device selected
             if (error instanceof DOMException && error.name === 'NotFoundError') {
                 console.log('No USB device selected by user');
-                setScanStatus('No USB device selected. Using test data...');
+                setScanStatus('No USB device selected.');
+                toast.error("No Comm channel selected");
             } else {
                 console.error('Error accessing serial port:', error);
-                setScanStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}. Using test data...`);
+                setScanStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                toast.error(`Error: ${error instanceof Error ? error.message : 'Connection failed'}`);
             }
 
-            // Fallback to test JSON data
-            const testData = { card_uuid: "test-2c963f66afa6" };
-            console.log('Using test JSON data:', testData);
-            await handleScannedCard(testData.card_uuid);
         } finally {
             setIsScanning(false);
         }
