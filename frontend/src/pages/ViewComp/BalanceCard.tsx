@@ -22,8 +22,8 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ balance, cardUuid, accountUui
   // Check-in form state
   const [commodity, setCommodity] = useState('');
   const [weight, setWeight] = useState('');
-  const [hourlyRate, setHourlyRate] = useState('');
-  const [estimatedHours, setEstimatedHours] = useState('24');
+  const [dailyRate, setDailyRate] = useState('');
+  const [estimatedDays, setEstimatedDays] = useState('1');
 
   const handleCheckIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +32,9 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ balance, cardUuid, accountUui
     try {
       const now = new Date();
       const checkIn = now.toISOString();
-      const estimatedCheckout = new Date(now.getTime() + parseInt(estimatedHours) * 60 * 60 * 1000).toISOString();
+      const estimatedHours = parseFloat(estimatedDays) * 24;
+      const estimatedCheckout = new Date(now.getTime() + estimatedHours * 60 * 60 * 1000).toISOString();
+      const hourlyRate = (parseFloat(dailyRate) / 24).toString();
 
       await storagesApi.create({
         account_uuid: accountUuid,
@@ -100,8 +102,8 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ balance, cardUuid, accountUui
   const resetCheckInForm = () => {
     setCommodity('');
     setWeight('');
-    setHourlyRate('');
-    setEstimatedHours('24');
+    setDailyRate('');
+    setEstimatedDays('1');
   };
 
   return (
@@ -209,14 +211,14 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ balance, cardUuid, accountUui
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">
-                    Hourly Rate (₦)
+                    Daily Rate (₦)
                   </label>
                   <input
                     type="number"
                     step="0.01"
-                    placeholder="100"
-                    value={hourlyRate}
-                    onChange={(e) => setHourlyRate(e.target.value)}
+                    placeholder="2400"
+                    value={dailyRate}
+                    onChange={(e) => setDailyRate(e.target.value)}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                     required
                   />
@@ -225,20 +227,21 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ balance, cardUuid, accountUui
 
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Estimated Duration (hours)
+                  Estimated Duration (days)
                 </label>
                 <input
                   type="number"
-                  placeholder="24"
-                  value={estimatedHours}
-                  onChange={(e) => setEstimatedHours(e.target.value)}
+                  step="0.5"
+                  placeholder="1"
+                  value={estimatedDays}
+                  onChange={(e) => setEstimatedDays(e.target.value)}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                   required
                 />
               </div>
 
               <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-900">
-                Estimated Cost: <span className="font-semibold">₦{((parseFloat(hourlyRate) || 0) * (parseFloat(estimatedHours) || 0)).toFixed(2)}</span>
+                Estimated Cost: <span className="font-semibold">₦{((parseFloat(dailyRate) || 0) * (parseFloat(estimatedDays) || 0)).toFixed(2)}</span>
               </div>
 
               <button
