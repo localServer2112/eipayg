@@ -45,7 +45,7 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh, b
   };
 
   const downloadCSV = () => {
-    const headers = ['Commodity', 'Weight (kg)', 'Hourly Rate (₦)', 'Check-in Date', 'Check-out Date', 'Status', 'Duration (hrs)', 'Cost (₦)'];
+    const headers = ['Commodity', 'Weight (kg)', 'Daily Rate (₦)', 'Check-in Date', 'Check-out Date', 'Status', 'Duration (hrs)', 'Cost (₦)'];
 
     const rows = storageLogs.map(log => {
       const checkInTime = new Date(log.check_in).getTime();
@@ -56,7 +56,7 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh, b
       return [
         log.commodity,
         log.weight,
-        log.hourly_rate,
+        (parseFloat(log.hourly_rate) * 24).toFixed(2),
         new Date(log.check_in).toLocaleString(),
         log.check_out ? new Date(log.check_out).toLocaleString() : 'N/A',
         log.check_out ? 'Checked Out' : 'Active',
@@ -103,7 +103,7 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh, b
       return [
         log.commodity,
         `${log.weight} kg`,
-        `₦${log.hourly_rate}`,
+        `₦${(parseFloat(log.hourly_rate) * 24).toFixed(2)}`,
         new Date(log.check_in).toLocaleDateString(),
         log.check_out ? new Date(log.check_out).toLocaleDateString() : '-',
         log.check_out ? 'Checked Out' : 'Active',
@@ -113,7 +113,7 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh, b
 
     autoTable(doc, {
       startY: 38,
-      head: [['Commodity', 'Weight', 'Rate/hr', 'Check-in', 'Check-out', 'Status', 'Cost']],
+      head: [['Commodity', 'Weight', 'Rate/day', 'Check-in', 'Check-out', 'Status', 'Cost']],
       body: tableData,
       theme: 'striped',
       headStyles: { fillColor: [26, 28, 30] },
@@ -196,7 +196,7 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh, b
             <tr className="text-left text-xs font-medium text-[#101828] uppercase tracking-wider border-b border-gray-100">
               <th className="pb-3 pl-2">Item</th>
               <th className="pb-3">Weight</th>
-              <th className="pb-3">Rate/hr</th>
+              <th className="pb-3">Rate/day</th>
               <th className="pb-3">Check-in</th>
               <th className="pb-3">Status</th>
               <th className="pb-3 pr-2 text-right">Action</th>
@@ -216,7 +216,7 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh, b
                       <span className="text-xs text-gray-400">{log.uuid?.substring(0, 8)}</span>
                     </td>
                     <td className="py-4 whitespace-nowrap">{log.weight} kg</td>
-                    <td className="py-4 whitespace-nowrap">₦{log.hourly_rate}</td>
+                    <td className="py-4 whitespace-nowrap">₦{(parseFloat(log.hourly_rate) * 24).toFixed(2)}</td>
                     <td className="py-4 whitespace-nowrap text-xs text-gray-600">
                       {new Date(log.check_in).toLocaleDateString()}
                       <br />
@@ -345,7 +345,7 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh, b
                   <div className="bg-gray-50 rounded-xl p-4 space-y-2 mb-6">
                     <p><span className="font-medium">Commodity:</span> {storage.commodity}</p>
                     <p><span className="font-medium">Weight:</span> {storage.weight} kg</p>
-                    <p><span className="font-medium">Hourly Rate:</span> ₦{storage.hourly_rate}</p>
+                    <p><span className="font-medium">Daily Rate:</span> ₦{(parseFloat(storage.hourly_rate) * 24).toFixed(2)}</p>
                     <p><span className="font-medium">Duration:</span> {durationHours.toFixed(1)} hours</p>
                     <p className="text-lg font-bold pt-2 border-t">
                       Estimated Cost: ₦{estimatedCost.toFixed(2)}
