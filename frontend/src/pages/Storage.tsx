@@ -65,7 +65,7 @@ const Storage: React.FC = () => {
             const estimatedCheckout = new Date(now.getTime() + estimatedHours * 60 * 60 * 1000).toISOString();
 
             // Calculate hourly rate from daily rate (daily / 24)
-            const hourlyRate = (parseFloat(dailyRate) / 24).toString();
+            const hourlyRate = (parseFloat(dailyRate) / 24).toFixed(2);
 
             await storagesApi.create({
                 account_uuid: accountUuid,

@@ -34,7 +34,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ balance, cardUuid, accountUui
       const checkIn = now.toISOString();
       const estimatedHours = parseFloat(estimatedDays) * 24;
       const estimatedCheckout = new Date(now.getTime() + estimatedHours * 60 * 60 * 1000).toISOString();
-      const hourlyRate = (parseFloat(dailyRate) / 24).toString();
+      const hourlyRate = (parseFloat(dailyRate) / 24).toFixed(2);
 
       await storagesApi.create({
         account_uuid: accountUuid,
