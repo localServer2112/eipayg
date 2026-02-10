@@ -72,9 +72,10 @@ export interface InitialCardSetupPayload {
 }
 
 export interface InitialCardSetupResponse {
+    uuid: string;
+    hex_id: string;
     message: string;
-    card_uuid: string;
-    status: 'existing' | 'created';
+    code: number;
 }
 
 // Re-export shared types for convenience

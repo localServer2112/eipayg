@@ -113,12 +113,7 @@ const Dashboard = () => {
             // Step 1: Call initial_card_setup to ensure the card exists in the backend
             const setupResponse = await cardsApi.initialCardSetup({ hex_id: hexId });
             console.log('initial_card_setup response:', setupResponse.data);
-            const cardUuid = setupResponse.data.card_uuid;
-            const isNewCard = setupResponse.data.status === 'created';
-
-            if (isNewCard) {
-                toast.info('New card registered in system.');
-            }
+            const cardUuid = setupResponse.data.uuid;
 
             setScanStatus(`Card registered. Checking assignment...`);
 
