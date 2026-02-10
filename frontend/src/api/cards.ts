@@ -67,11 +67,29 @@ export interface UpdateCardPayload {
     name_on_card?: string;
 }
 
+export interface InitialCardSetupPayload {
+    hex_id: string;
+}
+
+export interface InitialCardSetupResponse {
+    message: string;
+    card_uuid: string;
+    status: 'existing' | 'created';
+}
+
 // Re-export shared types for convenience
 export type { UserInfo, AccountDetails, StorageEntry };
 
 // Cards API functions
 export const cardsApi = {
+    /**
+     * Initial card setup - registers a raw hex_id from RFID reader.
+     * Creates a new unassigned/blocked card if it doesn't exist.
+     * Returns the card UUID.
+     */
+    initialCardSetup: (payload: InitialCardSetupPayload) =>
+        api.post<InitialCardSetupResponse>('/api/cards/initial_card_setup/', payload),
+
     /**
      * Create a new card and assign to user with initial balance
      */

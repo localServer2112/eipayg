@@ -106,39 +106,52 @@ const Dashboard = () => {
     const [assignInitialBalance, setAssignInitialBalance] = useState('');
     const [isAssigning, setIsAssigning] = useState(false);
 
-    // Handle scanned card data - check if assigned, if not open modal
-    const handleScannedCard = async (cardUuid: string) => {
-        setScanStatus(`Checking card ${cardUuid}...`);
+    // Handle scanned card data - register via initial_card_setup, then check assignment
+    const handleScannedCard = async (hexId: string) => {
+        setScanStatus(`Registering card ${hexId}...`);
         try {
-            // Fetch all cards and check if this UUID exists and is assigned
-            const response = await cardsApi.list();
-            // @ts-ignore
-            const cards: CardType[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
+            // Step 1: Call initial_card_setup to ensure the card exists in the backend
+            const setupResponse = await cardsApi.initialCardSetup({ hex_id: hexId });
+            const cardUuid = setupResponse.data.card_uuid;
+            const isNewCard = setupResponse.data.status === 'created';
 
-            const existingCard = cards.find(card => card.uuid === cardUuid);
-            const isAssigned = existingCard && (existingCard.user_phone || existingCard.user_info?.phone);
+            if (isNewCard) {
+                toast.info('New card registered in system.');
+            }
 
-            if (isAssigned) {
-                // Card is already assigned - navigate to view card page
-                setScanStatus(`Card assigned. Redirecting to user profile...`);
-                toast.success(`Card found! Opening user profile...`);
-                navigate(`/viewcard/${existingCard.uuid}`);
-            } else {
-                // Card not assigned - open modal with pre-filled UUID
+            setScanStatus(`Card registered. Checking assignment...`);
+
+            // Step 2: Get card info to check if it's assigned to a user
+            try {
+                const infoResponse = await cardsApi.getInfo({ card_uuid: cardUuid });
+                const cardInfo = infoResponse.data;
+                const isAssigned = cardInfo.user_info?.phone;
+
+                if (isAssigned) {
+                    // Card is already assigned - navigate to view card page
+                    setScanStatus(`Card assigned. Redirecting to user profile...`);
+                    toast.success(`Card found! Opening user profile...`);
+                    navigate(`/viewcard/${cardUuid}`);
+                } else {
+                    // Card not assigned - open modal with the UUID from backend
+                    setAssignCardUuid(cardUuid);
+                    setAssignUserPhone('');
+                    setAssignInitialBalance('');
+                    setIsAssignModalOpen(true);
+                    setScanStatus('Card not assigned. Please fill in the details.');
+                }
+            } catch (infoError) {
+                // Card exists but couldn't fetch info - open assign modal
                 setAssignCardUuid(cardUuid);
                 setAssignUserPhone('');
                 setAssignInitialBalance('');
                 setIsAssignModalOpen(true);
-                setScanStatus('Card not assigned. Please fill in the details.');
+                setScanStatus('Card registered but not yet assigned. Please fill in the details.');
             }
         } catch (error) {
-            console.error('Error checking card:', error);
-            // If card doesn't exist in system, open modal to assign it
-            setAssignCardUuid(cardUuid);
-            setAssignUserPhone('');
-            setAssignInitialBalance('');
-            setIsAssignModalOpen(true);
-            setScanStatus('New card detected. Please fill in the details.');
+            console.error('Error during card setup:', error);
+            toast.error('Failed to register card. Please try again.');
+            setScanStatus('Error registering card.');
         }
     };
 
