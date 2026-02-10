@@ -18,7 +18,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ cardDetails }) => {
         <h1 className="text-[32px] font-bold text-gray-900">{fullName}</h1>
         <div className="flex flex-wrap text-[14px] text-gray-500 mt-1 gap-x-4 gap-y-1">
           <p>Card ID: <span className="font-medium text-gray-700">{uuid}</span></p>
-          <p>Location: <span className="font-medium text-gray-700">{user_info.address}</span></p> // Address is used as location
+          <p>Location: <span className="font-medium text-gray-700">{user_info.address}</span></p>
           <p>Phone Number: <span className="font-medium text-gray-700">{user_info.phone}</span></p>
         </div>
       </div>
