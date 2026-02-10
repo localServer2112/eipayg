@@ -224,7 +224,7 @@ const Dashboard = () => {
             setScanStatus('Web Serial API not supported. Using test data...');
 
             // Use test JSON data
-            const testData = { card_uuid: "test-2c963f66afa6" };
+            const testData = { card_uuid: "A1B2C3D4E5" };
             console.log('Using test JSON data:', testData);
             setIsScanning(false);
             await handleScannedCard(testData.card_uuid);
