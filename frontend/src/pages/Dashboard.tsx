@@ -112,6 +112,7 @@ const Dashboard = () => {
         try {
             // Step 1: Call initial_card_setup to ensure the card exists in the backend
             const setupResponse = await cardsApi.initialCardSetup({ hex_id: hexId });
+            console.log('initial_card_setup response:', setupResponse.data);
             const cardUuid = setupResponse.data.card_uuid;
             const isNewCard = setupResponse.data.status === 'created';
 
@@ -123,6 +124,7 @@ const Dashboard = () => {
 
             // Step 2: Get card info to check if it's assigned to a user
             try {
+                console.log('Calling cards/info with UUID:', cardUuid);
                 const infoResponse = await cardsApi.getInfo({ card_uuid: cardUuid });
                 const cardInfo = infoResponse.data;
                 const isAssigned = cardInfo.user_info?.phone;
@@ -140,8 +142,9 @@ const Dashboard = () => {
                     setIsAssignModalOpen(true);
                     setScanStatus('Card not assigned. Please fill in the details.');
                 }
-            } catch (infoError) {
+            } catch (infoError: any) {
                 // Card exists but couldn't fetch info - open assign modal
+                console.error('cards/info error:', infoError.response?.data);
                 setAssignCardUuid(cardUuid);
                 setAssignUserPhone('');
                 setAssignInitialBalance('');
