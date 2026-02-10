@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
-import { cardsApi, Card as CardType } from '../api/cards';
+import { cardsApi } from '../api/cards';
 import { accountsApi } from '../api/accounts';
 import { storagesApi } from '../api/storages';
 import { Transaction } from '../api/types';
