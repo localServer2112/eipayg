@@ -22,10 +22,6 @@ const Storage: React.FC = () => {
     const [estimatedDays, setEstimatedDays] = useState('1');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Checkout modal state
-    const [checkoutStorage, setCheckoutStorage] = useState<StorageEntry | null>(null);
-    const [isCheckingOut, setIsCheckingOut] = useState(false);
-
     useEffect(() => {
         fetchStorages();
     }, []);
@@ -104,34 +100,6 @@ const Storage: React.FC = () => {
         }
     };
 
-    const handleCheckout = async () => {
-        if (!checkoutStorage) return;
-        setIsCheckingOut(true);
-
-        try {
-            const response = await storagesApi.checkout({
-                storage_uuid: checkoutStorage.uuid,
-                check_out: new Date().toISOString()
-            });
-
-            toast.success(`Checked out! Cost: ₦${response.data.total_cost}, New Balance: ₦${response.data.new_balance}`);
-            setCheckoutStorage(null);
-            fetchStorages();
-        } catch (error: any) {
-            console.error('Failed to checkout:', error);
-            const errorData = error.response?.data;
-            let errorMessage = 'Failed to checkout';
-            if (errorData?.error) {
-                errorMessage = errorData.error;
-            } else if (errorData?.detail) {
-                errorMessage = errorData.detail;
-            }
-            toast.error(errorMessage);
-        } finally {
-            setIsCheckingOut(false);
-        }
-    };
-
     const resetCheckInForm = () => {
         setCardUuid('');
         setCommodity('');
@@ -196,6 +164,7 @@ const Storage: React.FC = () => {
                         <table className="w-full text-left text-sm">
                             <thead className="border-b text-muted-foreground">
                                 <tr>
+                                    <th className="py-3 px-4 font-medium">Customer</th>
                                     <th className="py-3 px-4 font-medium">Commodity</th>
                                     <th className="py-3 px-4 font-medium">Weight (kg)</th>
                                     <th className="py-3 px-4 font-medium">Daily Rate</th>
@@ -203,7 +172,6 @@ const Storage: React.FC = () => {
                                     <th className="py-3 px-4 font-medium">Est. Checkout</th>
                                     <th className="py-3 px-4 font-medium">Duration (days)</th>
                                     <th className="py-3 px-4 font-medium">Status</th>
-                                    <th className="py-3 px-4 font-medium">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -218,7 +186,8 @@ const Storage: React.FC = () => {
                                 ) : (
                                     storageItems.map(item => (
                                         <tr key={item.uuid} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
-                                            <td className="py-3 px-4 font-medium">{item.commodity}</td>
+                                            <td className="py-3 px-4 font-medium">{item.account}</td>
+                                            <td className="py-3 px-4">{item.commodity}</td>
                                             <td className="py-3 px-4">{item.weight}</td>
                                             <td className="py-3 px-4">₦{(parseFloat(item.hourly_rate || '0') * 24).toFixed(2)}</td>
                                             <td className="py-3 px-4 text-muted-foreground">{formatDate(item.check_in)}</td>
@@ -228,13 +197,6 @@ const Storage: React.FC = () => {
                                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.is_active ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>
                                                     {item.is_active ? 'Stored' : 'Checked Out'}
                                                 </span>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                {item.is_active && (
-                                                    <Button size="sm" variant="outline" onClick={() => setCheckoutStorage(item)}>
-                                                        Check-out
-                                                    </Button>
-                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -317,52 +279,6 @@ const Storage: React.FC = () => {
                     </div>
                 </form>
             </Modal>
-
-            {/* Checkout Confirmation Modal */}
-            {checkoutStorage && (() => {
-                const estimatedCost = (checkoutStorage.duration_hours || 0) * parseFloat(checkoutStorage.hourly_rate);
-                const accountBalance = parseFloat(checkoutStorage.account_balance || '0');
-                const hasInsufficientBalance = checkoutStorage.account_balance !== undefined && accountBalance < estimatedCost;
-
-                return (
-                    <Modal
-                        isOpen={!!checkoutStorage}
-                        onClose={() => setCheckoutStorage(null)}
-                        title="Confirm Checkout"
-                    >
-                        <div className="space-y-4">
-                            <p>Are you sure you want to checkout this item?</p>
-                            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                                <p><span className="font-medium">Commodity:</span> {checkoutStorage.commodity}</p>
-                                <p><span className="font-medium">Weight:</span> {checkoutStorage.weight} kg</p>
-                                <p><span className="font-medium">Daily Rate:</span> ₦{(parseFloat(checkoutStorage.hourly_rate || '0') * 24).toFixed(2)}</p>
-                                <p><span className="font-medium">Duration:</span> {((checkoutStorage.duration_hours || 0) / 24).toFixed(1)} days</p>
-                                <p className="text-lg font-bold">
-                                    Estimated Cost: ₦{estimatedCost.toFixed(2)}
-                                </p>
-                                {checkoutStorage.account_balance !== undefined && (
-                                    <p className={`font-medium ${hasInsufficientBalance ? 'text-red-600' : 'text-green-600'}`}>
-                                        Account Balance: ₦{accountBalance.toFixed(2)}
-                                    </p>
-                                )}
-                            </div>
-                            {hasInsufficientBalance && (
-                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                                    <p className="text-red-700 text-sm font-medium">
-                                        Insufficient balance. The account needs ₦{(estimatedCost - accountBalance).toFixed(2)} more to checkout this item.
-                                    </p>
-                                </div>
-                            )}
-                            <div className="flex justify-end gap-2">
-                                <Button variant="ghost" onClick={() => setCheckoutStorage(null)}>Cancel</Button>
-                                <Button onClick={handleCheckout} disabled={isCheckingOut || hasInsufficientBalance}>
-                                    {isCheckingOut ? 'Processing...' : 'Confirm Checkout'}
-                                </Button>
-                            </div>
-                        </div>
-                    </Modal>
-                );
-            })()}
         </MainLayout>
     );
 };
