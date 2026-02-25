@@ -186,7 +186,12 @@ const Storage: React.FC = () => {
                                 ) : (
                                     storageItems.map(item => (
                                         <tr key={item.uuid} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
-                                            <td className="py-3 px-4 font-medium">{item.account}</td>
+                                            <td className="py-3 px-4">
+                                                <span className="font-medium">{item.user_name || item.account}</span>
+                                                {item.user_phone && (
+                                                    <><br /><span className="text-xs text-muted-foreground">{item.user_phone}</span></>
+                                                )}
+                                            </td>
                                             <td className="py-3 px-4">{item.commodity}</td>
                                             <td className="py-3 px-4">{item.weight}</td>
                                             <td className="py-3 px-4">₦{(parseFloat(item.hourly_rate || '0') * 24).toFixed(2)}</td>

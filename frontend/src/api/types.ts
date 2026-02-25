@@ -30,6 +30,8 @@ export interface StorageEntry {
     account: string;
     account_uuid: string;
     account_balance?: string;
+    user_name?: string;
+    user_phone?: string;
     commodity: string;
     weight: string;
     check_in: string;
