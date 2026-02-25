@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Download, FileText, FileSpreadsheet } from 'lucide-react';
 import { MainLayout } from '../layout/MainLayout';
 import { Card as UICard, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { usersApi, User } from '../api/users';
 import { toast } from 'sonner';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -17,6 +19,7 @@ const Users: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
     const [isRegistering, setIsRegistering] = useState(false);
+    const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
     // Register Form State
     const [firstName, setFirstName] = useState('');
@@ -125,6 +128,53 @@ const Users: React.FC = () => {
         }
     };
 
+    const downloadCSV = () => {
+        const headers = ['Name', 'Phone', 'Address', 'Balance'];
+        const rows = filteredUsers.map(user => [
+            `${user.first_name} ${user.last_name}`,
+            user.phone || '',
+            user.address || '',
+            user.balance || '0',
+        ]);
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `users_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        toast.success('CSV downloaded');
+        setIsDownloadModalOpen(false);
+    };
+
+    const downloadPDF = () => {
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text('Users Report', 14, 22);
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+        autoTable(doc, {
+            startY: 38,
+            head: [['Name', 'Phone', 'Address', 'Balance']],
+            body: filteredUsers.map(user => [
+                `${user.first_name} ${user.last_name}`,
+                user.phone || '-',
+                user.address || '-',
+                user.balance ? `₦${user.balance}` : '-',
+            ]),
+            theme: 'striped',
+            headStyles: { fillColor: [26, 28, 30] },
+            styles: { fontSize: 9 },
+        });
+        doc.save(`users_${new Date().toISOString().split('T')[0]}.pdf`);
+        toast.success('PDF downloaded');
+        setIsDownloadModalOpen(false);
+    };
+
     const filteredUsers = users.filter(user => {
         if (!searchTerm.trim()) return true;
         const search = searchTerm.toLowerCase().trim();
@@ -161,12 +211,21 @@ const Users: React.FC = () => {
 
             <UICard>
                 <CardHeader>
-                    <div className="w-full max-w-sm">
-                        <Input
-                            placeholder="Search by name, phone or address..."
-                            value={searchTerm}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                        />
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="flex-1 max-w-sm">
+                            <Input
+                                placeholder="Search by name, phone or address..."
+                                value={searchTerm}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <button
+                            onClick={() => setIsDownloadModalOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                        >
+                            <Download className="h-4 w-4" />
+                            Download
+                        </button>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -236,6 +295,59 @@ const Users: React.FC = () => {
                     )}
                 </CardContent>
             </UICard>
+
+            {/* Download Modal */}
+            {isDownloadModalOpen && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                    onClick={() => setIsDownloadModalOpen(false)}
+                >
+                    <div
+                        className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl relative mx-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h2 className="text-2xl font-bold text-gray-900 mb-1">Download Users Data</h2>
+                        <p className="text-gray-500 text-sm mb-6">Choose a format to export the users list</p>
+                        <div className="space-y-3">
+                            <button
+                                onClick={downloadCSV}
+                                className="w-full flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-left"
+                            >
+                                <div className="p-3 bg-green-100 rounded-lg">
+                                    <FileSpreadsheet className="h-6 w-6 text-green-600" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-gray-900">CSV File</h3>
+                                    <p className="text-sm text-gray-500">Spreadsheet format, works with Excel</p>
+                                </div>
+                            </button>
+                            <button
+                                onClick={downloadPDF}
+                                className="w-full flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-left"
+                            >
+                                <div className="p-3 bg-red-100 rounded-lg">
+                                    <FileText className="h-6 w-6 text-red-600" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-gray-900">PDF File</h3>
+                                    <p className="text-sm text-gray-500">Printable document format</p>
+                                </div>
+                            </button>
+                        </div>
+                        <div className="mt-6 pt-4 border-t border-gray-100">
+                            <p className="text-xs text-gray-400 text-center">{filteredUsers.length} users will be exported</p>
+                        </div>
+                        <button
+                            onClick={() => setIsDownloadModalOpen(false)}
+                            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
+                        >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Register Member Modal */}
             {isRegisterModalOpen && (

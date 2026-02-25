@@ -12,11 +12,14 @@ interface SpendingsCardProps {
   balance?: string;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh, balance }) => {
   const [checkoutStorageId, setCheckoutStorageId] = useState<string | null>(null);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleCheckout = async (storageUuid: string) => {
     setIsCheckingOut(true);
@@ -163,6 +166,12 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh, b
     return new Date(b.check_in).getTime() - new Date(a.check_in).getTime();
   });
 
+  const totalPages = Math.ceil(sortedLogs.length / ITEMS_PER_PAGE);
+  const paginatedLogs = sortedLogs.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm h-full flex flex-col max-h-[calc(90vh-300px)]">
       <div className="flex justify-between items-center mb-4">
@@ -177,7 +186,7 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh, b
             type="text"
             placeholder="Search by item..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent sm:text-sm"
           />
         </div>
@@ -206,7 +215,7 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh, b
             {sortedLogs.length === 0 ? (
               <tr><td colSpan={6} className="py-4 text-center text-gray-500">No storage history found</td></tr>
             ) : (
-              sortedLogs.map((log, index) => {
+              paginatedLogs.map((log, index) => {
                 const isActive = !log.check_out;
                 return (
                   <tr key={log.uuid || index} className="border-b border-gray-50 last:border-b-0 hover:bg-gray-50/50 transition-colors">
@@ -252,6 +261,31 @@ const SpendingsCard: React.FC<SpendingsCardProps> = ({ storageLogs, onRefresh, b
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 text-sm">
+          <p className="text-gray-500">
+            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, sortedLogs.length)} of {sortedLogs.length}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(p => p - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setCurrentPage(p => p + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Download Modal */}
       {isDownloadModalOpen && (
